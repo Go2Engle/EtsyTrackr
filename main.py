@@ -13,7 +13,7 @@ from modules.welcome import WelcomeDialog
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Etsy Sales Tracker")
+        self.setWindowTitle("EtsyTrackr")
         self.setMinimumSize(1200, 800)
         
         # Initialize settings

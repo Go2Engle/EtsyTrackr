@@ -1,4 +1,4 @@
-# Etsy Business Tracker
+# EtsyTrackr
 
 ⚠️ **WORK IN PROGRESS**: This application is actively being developed. Features and functionality may change without notice. Use at your own risk.
 

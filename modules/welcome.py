@@ -2,13 +2,14 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QPushButton,
                               QFileDialog, QWidget, QRadioButton, QButtonGroup,
                               QMessageBox)
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
 import os
 
 class WelcomeDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.storage_path = None
-        self.setWindowTitle("Welcome to Etsy Tracker")
+        self.setWindowTitle("EtsyTrackr")
         self.setMinimumWidth(500)
         self.setMinimumHeight(400)  
         self.setup_ui()
@@ -19,7 +20,7 @@ class WelcomeDialog(QDialog):
         layout.setContentsMargins(30, 30, 30, 30)  
         
         # Welcome message
-        welcome_label = QLabel("Welcome to Etsy Tracker!")
+        welcome_label = QLabel("Welcome to EtsyTrackr")
         welcome_label.setStyleSheet("font-size: 24px; font-weight: bold;")
         welcome_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(welcome_label)
