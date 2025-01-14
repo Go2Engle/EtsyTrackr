@@ -4,6 +4,24 @@
 
 A desktop application to help Etsy sellers track their business finances, including sales, expenses, and profits.
 
+## Screenshots
+
+### Dashboard
+<img src="screenshots/dashboard.png" width="600" alt="Dashboard">
+Real-time overview of your business performance with sales trends and expense breakdowns.
+
+### Sales Tracking
+<img src="screenshots/sales.png" width="600" alt="Sales">
+Import and manage your Etsy sales statements with detailed breakdowns.
+
+### Expense Management
+<img src="screenshots/expenses.png" width="600" alt="Expenses">
+Track your business expenses and manage receipts.
+
+### Settings
+<img src="screenshots/settings.png" width="600" alt="Settings">
+Customize your application settings.
+
 ## About
 
 This project was created to provide Etsy sellers with a simple, offline way to track their business performance without relying on the Etsy API. Instead of requiring API access or constant internet connectivity, it works directly with the monthly CSV statements that any seller can download from their Etsy Shop Manager.
@@ -103,11 +121,11 @@ This is a work in progress. If you find bugs or have suggestions for improvement
 This project is licensed under a modified MIT License that explicitly prohibits commercial resale. While the software is open source and free to use, modify, and distribute, it **cannot** be resold by any third party.
 
 Key points:
-- ✅ Free to use
-- ✅ Free to modify
-- ✅ Free to distribute
-- ✅ Free to use in personal or business contexts
-- ❌ Cannot be resold commercially
-- ❌ Cannot be included in paid packages/services
+- Free to use
+- Free to modify
+- Free to distribute
+- Free to use in personal or business contexts
+- Cannot be resold commercially
+- Cannot be included in paid packages/services
 
 See the [LICENSE](LICENSE) file for the complete terms.
