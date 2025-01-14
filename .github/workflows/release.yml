@@ -4,6 +4,9 @@ on:
   release:
     types: [created]
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -21,14 +24,9 @@ jobs:
       - name: Build executable
         run: python build.py
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./dist/EtsyTrackr.exe
-          asset_name: EtsyTrackr-Windows.exe
-          asset_content_type: application/octet-stream
+          files: ./dist/EtsyTrackr.exe
 
   build-macos:
     runs-on: macos-latest
@@ -52,14 +50,9 @@ jobs:
           mv EtsyTrackr EtsyTrackr.app/Contents/MacOS/
           hdiutil create -volname "EtsyTrackr" -srcfolder EtsyTrackr.app -ov -format UDZO EtsyTrackr.dmg
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./dist/EtsyTrackr.dmg
-          asset_name: EtsyTrackr-MacOS.dmg
-          asset_content_type: application/x-apple-diskimage
+          files: ./dist/EtsyTrackr.dmg
 
   build-linux:
     runs-on: ubuntu-latest
@@ -85,11 +78,6 @@ jobs:
           chmod +x appimagetool-x86_64.AppImage
           ./appimagetool-x86_64.AppImage EtsyTrackr.AppDir EtsyTrackr.AppImage
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./dist/EtsyTrackr.AppImage
-          asset_name: EtsyTrackr-Linux.AppImage
-          asset_content_type: application/x-executable
+          files: ./dist/EtsyTrackr.AppImage
