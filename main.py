@@ -3,6 +3,7 @@ import os
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                            QTabWidget, QFileDialog, QMessageBox, QDialog)
 from PySide6.QtCore import QSettings
+from PySide6.QtGui import QIcon
 from modules.dashboard import DashboardWidget
 from modules.expenses import ExpensesWidget
 from modules.settings import SettingsWidget
@@ -15,6 +16,11 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("EtsyTrackr")
         self.setMinimumSize(1200, 800)
+        
+        # Set window icon
+        icon_path = os.path.join(os.path.dirname(__file__), 'assets', 'icon.png')
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
         
         # Initialize settings
         self.settings = QSettings('EtsyTracker', 'EtsyTracker')
