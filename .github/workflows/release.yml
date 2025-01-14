@@ -44,7 +44,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxcb-xinerama0 fuse libfuse2
+          sudo apt-get install -y libxcb-xinerama0 fuse libfuse2 imagemagick
 
       - name: Install dependencies
         run: |
@@ -57,25 +57,30 @@ jobs:
       - name: Create AppImage
         run: |
           cd dist
-          mkdir -p EtsyTrackr.AppDir/usr/bin
-          mv etsytrackr EtsyTrackr.AppDir/usr/bin/
-          # Create desktop entry
-          mkdir -p EtsyTrackr.AppDir/usr/share/applications
-          cat > EtsyTrackr.AppDir/usr/share/applications/etsytrackr.desktop << EOF
+          mkdir -p EtsyTrackr.AppDir
+          cp etsytrackr EtsyTrackr.AppDir/AppRun
+          chmod +x EtsyTrackr.AppDir/AppRun
+          
+          # Create desktop entry file
+          cat > EtsyTrackr.AppDir/etsytrackr.desktop << EOF
           [Desktop Entry]
           Name=EtsyTrackr
-          Exec=etsytrackr
+          Exec=AppRun
           Icon=etsytrackr
           Type=Application
           Categories=Utility;
           EOF
+          
+          # Create a simple icon (required by AppImage)
+          convert -size 256x256 xc:transparent -fill black -draw "text 50,150 'EtsyTrackr'" EtsyTrackr.AppDir/etsytrackr.png
+          
           # Download and extract appimagetool
           wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x appimagetool-x86_64.AppImage
-          # Extract appimagetool to avoid FUSE requirement
           ./appimagetool-x86_64.AppImage --appimage-extract
-          # Use extracted appimagetool
-          ./squashfs-root/AppRun EtsyTrackr.AppDir EtsyTrackr.AppImage
+          
+          # Create AppImage
+          ARCH=x86_64 ./squashfs-root/AppRun EtsyTrackr.AppDir EtsyTrackr.AppImage
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
