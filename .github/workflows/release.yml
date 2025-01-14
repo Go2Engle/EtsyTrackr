@@ -51,6 +51,14 @@ jobs:
 
       - name: Create DMG
         run: |
+          # Free up space
+          df -h
+          sudo rm -rf /usr/local/.ghcup
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/local/share/chromium
+          sudo rm -rf /usr/local/lib/node_modules
+          df -h
+          
           cd dist
           mkdir -p EtsyTrackr.app/Contents/{MacOS,Resources}
           mv EtsyTrackr EtsyTrackr.app/Contents/MacOS/
@@ -82,8 +90,10 @@ jobs:
           </plist>
           EOF
           
-          # Create DMG
-          hdiutil create -volname "EtsyTrackr" -srcfolder EtsyTrackr.app -ov -format UDZO EtsyTrackr.dmg
+          # Create DMG in /tmp for more space
+          TMP_DMG="/tmp/EtsyTrackr.dmg"
+          hdiutil create -volname "EtsyTrackr" -srcfolder EtsyTrackr.app -ov -format UDZO "$TMP_DMG"
+          mv "$TMP_DMG" EtsyTrackr.dmg
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
