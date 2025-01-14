@@ -1,6 +1,9 @@
 # <img src="assets/icon.png" width="32" height="32" alt="EtsyTrackr Icon"> EtsyTrackr
 
-[![Build Release](https://github.com/engdan77/etsy_tracker/actions/workflows/release.yml/badge.svg)](https://github.com/engdan77/etsy_tracker/actions/workflows/release.yml)
+[![Release](https://img.shields.io/github/v/release/Go2Engle/EtsyTrackr?include_prereleases&style=for-the-badge)](https://github.com/Go2Engle/EtsyTrackr/releases)
+[![Build](https://img.shields.io/github/actions/workflow/status/Go2Engle/EtsyTrackr/release.yml?style=for-the-badge)](https://github.com/Go2Engle/EtsyTrackr/actions)
+[![License](https://img.shields.io/github/license/Go2Engle/EtsyTrackr?style=for-the-badge)](https://github.com/Go2Engle/EtsyTrackr/blob/main/LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
 
 ⚠️ **WORK IN PROGRESS**: This application is actively being developed. Features and functionality may change without notice. Use at your own risk.
 
