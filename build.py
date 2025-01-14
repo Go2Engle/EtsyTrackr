@@ -3,7 +3,6 @@ import sys
 import os
 import shutil
 from pathlib import Path
-import site
 import PySide6
 
 def get_pyside_dir():
@@ -25,6 +24,7 @@ def build_executable():
     
     # Get PySide6 directory
     pyside_dir = get_pyside_dir()
+    print(f"PySide6 directory contents: {os.listdir(pyside_dir)}")
     
     # Determine platform-specific settings
     if sys.platform.startswith('win'):
@@ -44,27 +44,28 @@ def build_executable():
         '--onefile',
         '--windowed',
         '--clean',
-        '--hidden-import=PySide6',
         '--hidden-import=PySide6.QtCore',
         '--hidden-import=PySide6.QtGui',
         '--hidden-import=PySide6.QtWidgets',
-        '--collect-all=PySide6',
-        '--collect-data=PySide6',
-        '--copy-metadata=PySide6',
+        '--hidden-import=PySide6.QtSvg',
+        '--hidden-import=PySide6.QtNetwork',
         f'--add-data=modules{sep}modules',
     ]
     
-    # Add PySide6 binaries and plugins
-    if os.path.exists(pyside_dir):
-        plugins_dir = os.path.join(pyside_dir, 'plugins')
-        if os.path.exists(plugins_dir):
-            args.append(f'--add-binary={plugins_dir}{sep}PySide6/plugins')
-        
-        # Add Qt binaries
-        for dll in os.listdir(pyside_dir):
-            if dll.endswith('.dll'):
-                dll_path = os.path.join(pyside_dir, dll)
-                args.append(f'--add-binary={dll_path}{sep}.')
+    # Add PySide6 binaries and data
+    qt_plugins = ['platforms', 'styles', 'imageformats']
+    for plugin in qt_plugins:
+        plugin_path = os.path.join(pyside_dir, 'plugins', plugin)
+        if os.path.exists(plugin_path):
+            print(f"Adding Qt plugin: {plugin}")
+            args.append(f'--add-data={plugin_path}{sep}PySide6/plugins/{plugin}')
+    
+    # Add Qt binaries
+    for file in os.listdir(pyside_dir):
+        if file.endswith(('.dll', '.pyd')):
+            file_path = os.path.join(pyside_dir, file)
+            print(f"Adding Qt binary: {file}")
+            args.append(f'--add-data={file_path}{sep}.')
     
     try:
         print("Starting PyInstaller build with args:", args)
