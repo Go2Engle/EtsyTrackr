@@ -1,5 +1,7 @@
 # <img src="assets/icon.png" width="32" height="32" alt="EtsyTrackr Icon"> EtsyTrackr
 
+[![Build Release](https://github.com/engdan77/etsy_tracker/actions/workflows/release.yml/badge.svg)](https://github.com/engdan77/etsy_tracker/actions/workflows/release.yml)
+
 ⚠️ **WORK IN PROGRESS**: This application is actively being developed. Features and functionality may change without notice. Use at your own risk.
 
 A desktop application to help Etsy sellers track their business finances, including sales, expenses, and profits.
