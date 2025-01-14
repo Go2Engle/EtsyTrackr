@@ -77,28 +77,25 @@ def build_executable():
         exe_name = 'etsytrackr'
         sep = ':'
     
-    # PyInstaller arguments
-    args = [
+    # Base PyInstaller command
+    command = [
         'main.py',
-        '--name=' + exe_name,
         '--onefile',
         '--windowed',
         '--clean',
-        '--hidden-import=PySide6.QtCore',
-        '--hidden-import=PySide6.QtGui',
-        '--hidden-import=PySide6.QtWidgets',
+        f'--name={exe_name}',
         f'--add-data=modules{sep}modules',
-        f'--add-data=assets{sep}assets',  # Include assets directory
+        f'--add-data=assets{sep}assets'
     ]
-
+    
     # Add icon if available
     if icon_path:
         print(f"Using icon: {icon_path}")
-        args.extend(['--icon', icon_path])
+        command.append(f'--icon={icon_path}')
     
     try:
-        print("Starting PyInstaller build with args:", args)
-        PyInstaller.__main__.run(args)
+        print("Starting PyInstaller build with command:", ' '.join(command))
+        PyInstaller.__main__.run(command)
         print(f"Build completed! Executable created in dist/{exe_name}")
     except Exception as e:
         print(f"Error during build: {str(e)}")
