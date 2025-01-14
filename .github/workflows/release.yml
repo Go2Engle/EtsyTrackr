@@ -24,9 +24,11 @@ jobs:
       - name: Build executable
         run: python build.py
       - name: Upload Release Asset
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: ./dist/EtsyTrackr.exe
+          files: |
+            ./dist/EtsyTrackr.exe
 
   build-macos:
     runs-on: macos-latest
@@ -50,9 +52,11 @@ jobs:
           mv EtsyTrackr EtsyTrackr.app/Contents/MacOS/
           hdiutil create -volname "EtsyTrackr" -srcfolder EtsyTrackr.app -ov -format UDZO EtsyTrackr.dmg
       - name: Upload Release Asset
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: ./dist/EtsyTrackr.dmg
+          files: |
+            ./dist/EtsyTrackr.dmg
 
   build-linux:
     runs-on: ubuntu-latest
@@ -78,6 +82,8 @@ jobs:
           chmod +x appimagetool-x86_64.AppImage
           ./appimagetool-x86_64.AppImage EtsyTrackr.AppDir EtsyTrackr.AppImage
       - name: Upload Release Asset
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: ./dist/EtsyTrackr.AppImage
+          files: |
+            ./dist/EtsyTrackr.AppImage
