@@ -4,6 +4,14 @@
 
 A desktop application to help Etsy sellers track their business finances, including sales, expenses, and profits.
 
+## Platform Support
+
+| Platform | Status | Notes |
+|----------|--------|-------|
+| Windows  | ✅ Tested | Primary development platform |
+| macOS    | ⚠️ Untested | Build available but not verified |
+| Linux    | ⚠️ Untested | Build available but not verified |
+
 ## Screenshots
 
 ### Dashboard
