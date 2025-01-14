@@ -10,14 +10,17 @@ permissions:
 jobs:
   build-windows:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ['3.11.8']
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11.8'
-          check-latest: true
-          allow-prereleases: false
+          python-version: ${{ matrix.python-version }}
+          architecture: 'x64'
+          update-environment: true
           cache: 'pip'
           cache-dependency-path: |
             requirements.txt
@@ -31,6 +34,7 @@ jobs:
       - name: Verify Python and PySide6
         run: |
           python --version
+          python -c "import sys; print(sys.executable)"
           python -c "import PySide6; print('PySide6 version:', PySide6.__version__)"
           python -c "import PySide6; print('PySide6 location:', PySide6.__file__)"
           python -c "from PySide6 import QtCore; print('QtCore location:', QtCore.__file__)"
@@ -52,14 +56,17 @@ jobs:
 
   build-macos:
     runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: ['3.11.8']
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11.8'
-          check-latest: true
-          allow-prereleases: false
+          python-version: ${{ matrix.python-version }}
+          architecture: 'x64'
+          update-environment: true
           cache: 'pip'
           cache-dependency-path: |
             requirements.txt
@@ -87,14 +94,17 @@ jobs:
 
   build-linux:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11.8']
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11.8'
-          check-latest: true
-          allow-prereleases: false
+          python-version: ${{ matrix.python-version }}
+          architecture: 'x64'
+          update-environment: true
           cache: 'pip'
           cache-dependency-path: |
             requirements.txt
