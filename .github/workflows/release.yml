@@ -17,110 +17,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.11.8
-          architecture: 'x64'
-          cache: 'pip'
-          cache-dependency-path: requirements.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pyinstaller==6.3.0
-          pip list
 
       - name: Build executable
         run: python build.py
-
-      - name: Verify executable
-        run: |
-          if (Test-Path dist\EtsyTrackr.exe) {
-            Write-Host "EtsyTrackr.exe exists."
-          } else {
-            Write-Error "Executable not found."
-          }
-          dir dist\EtsyTrackr.exe /s
-          echo "Executable size:"
-          powershell -Command "Get-Item dist\EtsyTrackr.exe | Select-Object Length"
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         with:
           files: dist/EtsyTrackr.exe
-
-  build-macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.11.8
-          architecture: 'x64'
-          cache: 'pip'
-          cache-dependency-path: requirements.txt
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller==6.3.0
-          pip list
-
-      - name: Build executable
-        run: python build.py
-
-      - name: Create DMG
-        run: |
-          cd dist
-          mkdir -p EtsyTrackr.app/Contents/MacOS
-          mv EtsyTrackr EtsyTrackr.app/Contents/MacOS/
-          hdiutil create -volname "EtsyTrackr" -srcfolder EtsyTrackr.app -ov -format UDZO EtsyTrackr.dmg
-
-      - name: Verify DMG
-        run: ls dist/EtsyTrackr.dmg
-
-      - name: Upload Release Asset
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/EtsyTrackr.dmg
-
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.11.8
-          architecture: 'x64'
-          cache: 'pip'
-          cache-dependency-path: requirements.txt
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller==6.3.0
-          pip list
-
-      - name: Build executable
-        run: python build.py
-
-      - name: Create AppImage
-        run: |
-          cd dist
-          mkdir -p EtsyTrackr.AppDir/usr/bin
-          mv etsytrackr EtsyTrackr.AppDir/usr/bin/
-          wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-          chmod +x appimagetool-x86_64.AppImage
-          ./appimagetool-x86_64.AppImage EtsyTrackr.AppDir EtsyTrackr.AppImage
-
-      - name: Verify AppImage
-        run: ls dist/EtsyTrackr.AppImage
-
-      - name: Upload Release Asset
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/EtsyTrackr.AppImage
