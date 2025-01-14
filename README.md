@@ -23,10 +23,6 @@ A desktop application to help Etsy sellers track their business finances, includ
 <img src="screenshots/dashboard.png" width="600" alt="Dashboard">
 Real-time overview of your business performance with sales trends and expense breakdowns.
 
-### Sales Tracking
-<img src="screenshots/sales.png" width="600" alt="Sales">
-Import and manage your Etsy sales statements with detailed breakdowns.
-
 ### Expense Management
 <img src="screenshots/expenses.png" width="600" alt="Expenses">
 Track your business expenses and manage receipts.
