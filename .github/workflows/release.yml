@@ -44,7 +44,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxcb-xinerama0
+          sudo apt-get install -y libxcb-xinerama0 fuse libfuse2
 
       - name: Install dependencies
         run: |
@@ -59,9 +59,23 @@ jobs:
           cd dist
           mkdir -p EtsyTrackr.AppDir/usr/bin
           mv etsytrackr EtsyTrackr.AppDir/usr/bin/
+          # Create desktop entry
+          mkdir -p EtsyTrackr.AppDir/usr/share/applications
+          cat > EtsyTrackr.AppDir/usr/share/applications/etsytrackr.desktop << EOF
+          [Desktop Entry]
+          Name=EtsyTrackr
+          Exec=etsytrackr
+          Icon=etsytrackr
+          Type=Application
+          Categories=Utility;
+          EOF
+          # Download and extract appimagetool
           wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x appimagetool-x86_64.AppImage
-          ./appimagetool-x86_64.AppImage EtsyTrackr.AppDir EtsyTrackr.AppImage
+          # Extract appimagetool to avoid FUSE requirement
+          ./appimagetool-x86_64.AppImage --appimage-extract
+          # Use extracted appimagetool
+          ./squashfs-root/AppRun EtsyTrackr.AppDir EtsyTrackr.AppImage
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
