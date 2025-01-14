@@ -1,4 +1,4 @@
-# EtsyTrackr
+# <img src="assets/icon.png" width="32" height="32" alt="EtsyTrackr Icon"> EtsyTrackr
 
 ⚠️ **WORK IN PROGRESS**: This application is actively being developed. Features and functionality may change without notice. Use at your own risk.
 
