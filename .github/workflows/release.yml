@@ -51,18 +51,32 @@ jobs:
 
       - name: Create DMG
         run: |
-          # Free up space
+          # Free up more space
           df -h
           sudo rm -rf /usr/local/.ghcup
           sudo rm -rf /usr/local/share/powershell
           sudo rm -rf /usr/local/share/chromium
           sudo rm -rf /usr/local/lib/node_modules
+          sudo rm -rf /Library/Developer/CommandLineTools
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/share/swift
+          brew cleanup
           df -h
           
-          cd dist
+          # Create a smaller working directory
+          WORK_DIR="/private/tmp/etsytrackr_build"
+          sudo mkdir -p "$WORK_DIR"
+          sudo chmod 777 "$WORK_DIR"
+          
+          # Move necessary files to working directory
+          cp -r dist/EtsyTrackr "$WORK_DIR/"
+          cp assets/icon.png "$WORK_DIR/"
+          cd "$WORK_DIR"
+          
+          # Create app bundle
           mkdir -p EtsyTrackr.app/Contents/{MacOS,Resources}
           mv EtsyTrackr EtsyTrackr.app/Contents/MacOS/
-          cp ../assets/icon.png EtsyTrackr.app/Contents/Resources/
+          cp icon.png EtsyTrackr.app/Contents/Resources/
           
           # Create Info.plist
           cat > EtsyTrackr.app/Contents/Info.plist << EOF
@@ -90,10 +104,11 @@ jobs:
           </plist>
           EOF
           
-          # Create DMG in /tmp for more space
-          TMP_DMG="/tmp/EtsyTrackr.dmg"
-          hdiutil create -volname "EtsyTrackr" -srcfolder EtsyTrackr.app -ov -format UDZO "$TMP_DMG"
-          mv "$TMP_DMG" EtsyTrackr.dmg
+          # Create DMG with reduced size
+          hdiutil create -size 200m -volname "EtsyTrackr" -srcfolder EtsyTrackr.app -ov -format UDZO EtsyTrackr.dmg
+          
+          # Move DMG back to dist directory
+          mv EtsyTrackr.dmg "$GITHUB_WORKSPACE/dist/"
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
