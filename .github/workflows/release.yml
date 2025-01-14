@@ -16,7 +16,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11.8'
+          check-latest: true
+          allow-prereleases: false
           cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -24,15 +28,15 @@ jobs:
           pip install pandas==2.1.4 matplotlib==3.8.2 plotly==5.18.0 python-dotenv==1.0.0 PyPDF2==3.0.1 pillow==10.1.0 numpy==1.26.3
           pip install pyinstaller==6.3.0
           pip list
-      - name: Verify PySide6
+      - name: Verify Python and PySide6
         run: |
+          python --version
           python -c "import PySide6; print('PySide6 version:', PySide6.__version__)"
           python -c "import PySide6; print('PySide6 location:', PySide6.__file__)"
           python -c "from PySide6 import QtCore; print('QtCore location:', QtCore.__file__)"
           dir "$env:pythonLocation\Lib\site-packages\PySide6"
       - name: Build executable
         run: |
-          python -V
           python build.py
       - name: Check executable
         run: |
@@ -54,7 +58,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11.8'
+          check-latest: true
+          allow-prereleases: false
           cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -85,7 +93,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11.8'
+          check-latest: true
+          allow-prereleases: false
           cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
