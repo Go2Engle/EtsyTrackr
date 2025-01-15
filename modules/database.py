@@ -28,18 +28,20 @@ class Database:
         - date: date string in ISO format
         - description: string
         - amount: float
-        - category: string
         - receipt_file: optional string, path to receipt
         """
         with open(self.expenses_file, 'r') as f:
             expenses = json.load(f)
         
+        # Find the next available ID
+        max_id = max([expense['id'] for expense in expenses]) if expenses else 0
+        next_id = max_id + 1
+        
         expense = {
-            'id': len(expenses) + 1,
+            'id': next_id,
             'date': expense_data['date'],
             'description': expense_data['description'],
             'amount': expense_data['amount'],
-            'category': expense_data.get('category', ''),
             'receipt_file': expense_data.get('receipt_file')
         }
         
@@ -47,6 +49,8 @@ class Database:
         
         with open(self.expenses_file, 'w') as f:
             json.dump(expenses, f)
+        
+        return next_id
     
     def get_expenses(self, start_date=None, end_date=None):
         with open(self.expenses_file, 'r') as f:
@@ -348,8 +352,8 @@ class Database:
         with open(self.expenses_file, 'w') as f:
             json.dump(expenses, f)
 
-    def update_expense(self, expense_id, receipt_path=None, category=None):
-        """Update an expense's receipt path or category in the database"""
+    def update_expense(self, expense_id, receipt_path=None):
+        """Update an expense's receipt path in the database"""
         try:
             with open(self.expenses_file, 'r') as f:
                 expenses = json.load(f)
@@ -359,11 +363,6 @@ class Database:
                     if expense['id'] == expense_id:
                         # Store receipt path directly as string
                         expense['receipt_file'] = receipt_path
-                        break
-            if category:
-                for expense in expenses:
-                    if expense['id'] == expense_id:
-                        expense['category'] = category
                         break
             
             with open(self.expenses_file, 'w') as f:
