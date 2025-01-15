@@ -1,6 +1,6 @@
 import sys
 import os
-from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, 
                            QTabWidget, QFileDialog, QMessageBox, QDialog)
 from PySide6.QtCore import QSettings
 from PySide6.QtGui import QIcon
@@ -10,6 +10,8 @@ from modules.settings import SettingsWidget
 from modules.sales import SalesWidget
 from modules.database import Database
 from modules.welcome import WelcomeDialog
+from modules.theme import ThemeManager
+from modules.sidebar import Sidebar, MainContent
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -22,8 +24,11 @@ class MainWindow(QMainWindow):
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
         
-        # Initialize settings
+        # Initialize settings and theme
         self.settings = QSettings('EtsyTracker', 'EtsyTracker')
+        self.theme_manager = ThemeManager()
+        self.theme_manager.apply_theme()
+        
         self.init_storage_location()
         
         # Initialize database
@@ -66,32 +71,38 @@ class MainWindow(QMainWindow):
         # Create central widget and layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        layout = QVBoxLayout(central_widget)
+        layout = QHBoxLayout(central_widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         
-        # Create tab widget
-        tabs = QTabWidget()
+        # Create sidebar
+        self.sidebar = Sidebar(self.theme_manager)
+        layout.addWidget(self.sidebar)
         
-        # Create and add dashboard tab first
-        self.dashboard = DashboardWidget(self.db, None)  
-        tabs.addTab(self.dashboard, "Dashboard")
+        # Create main content area
+        self.main_content = MainContent()
         
-        # Create and add sales tab
+        # Create and add dashboard
+        self.dashboard = DashboardWidget(self.db, self.theme_manager, None)
+        self.main_content.add_widget(self.dashboard, "Dashboard")
+        
+        # Create and add sales
         self.sales = SalesWidget(self.db)
-        tabs.addTab(self.sales, "Sales")
+        self.main_content.add_widget(self.sales, "Sales")
         
-        # Create and add expenses tab
+        # Create and add expenses
         self.expenses = ExpensesWidget(self.db)
-        tabs.addTab(self.expenses, "Expenses")
+        self.main_content.add_widget(self.expenses, "Expenses")
         
-        # Create and add settings tab
-        self.settings_widget = SettingsWidget(self.settings, self.db)
-        tabs.addTab(self.settings_widget, "Settings")
+        # Create and add settings
+        self.settings_widget = SettingsWidget(self.settings, self.db, self.theme_manager)
+        self.main_content.add_widget(self.settings_widget, "Settings")
         
-        # Add tabs to layout
-        layout.addWidget(tabs)
+        # Connect sidebar signals
+        self.sidebar.page_changed.connect(self.main_content.setCurrentIndex)
         
-        # Initial refresh of dashboard
-        self.dashboard.refresh_dashboard()
+        # Add main content to layout
+        layout.addWidget(self.main_content)
 
 def main():
     app = QApplication(sys.argv)

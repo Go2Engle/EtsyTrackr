@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                           QPushButton, QFileDialog, QMessageBox)
+                           QPushButton, QFileDialog, QMessageBox, QFrame)
 from PySide6.QtCore import Qt, Signal
 import os
 import shutil
@@ -7,26 +7,48 @@ import shutil
 class SettingsWidget(QWidget):
     storage_location_changed = Signal(str)
     
-    def __init__(self, settings, db):
+    def __init__(self, settings, db, theme_manager=None):
         super().__init__()
         self.settings = settings
         self.db = db
+        self.theme_manager = theme_manager
         self.setup_ui()
     
     def setup_ui(self):
         layout = QVBoxLayout()
+        layout.setSpacing(24)  # Increased spacing between sections
+        
+        # Theme Section
+        if self.theme_manager:
+            theme_section = self.create_section("Appearance")
+            theme_section_layout = theme_section.layout()
+            
+            # Theme toggle
+            theme_layout = QHBoxLayout()
+            theme_label = QLabel("Dark Mode")
+            theme_layout.addWidget(theme_label)
+            
+            theme_toggle = QPushButton("Toggle Theme")
+            theme_toggle.setFixedWidth(120)
+            theme_toggle.clicked.connect(self.toggle_theme)
+            theme_layout.addWidget(theme_toggle)
+            theme_layout.addStretch()
+            
+            theme_section_layout.addLayout(theme_layout)
+            layout.addWidget(theme_section)
         
         # Storage Location Section
-        storage_section = QVBoxLayout()
+        storage_section = self.create_section("Data Storage")
+        storage_section_layout = storage_section.layout()
         
         # Header
         storage_header = QLabel("Data Storage")
         storage_header.setStyleSheet("font-size: 16px; font-weight: bold;")
-        storage_section.addWidget(storage_header)
+        storage_section_layout.addWidget(storage_header)
         
         # Current location
         current_location = QLabel(f"Current Location: {self.settings.value('storage_location')}")
-        storage_section.addWidget(current_location)
+        storage_section_layout.addWidget(current_location)
         
         # Buttons layout
         buttons_layout = QHBoxLayout()
@@ -37,19 +59,41 @@ class SettingsWidget(QWidget):
         buttons_layout.addWidget(change_btn)
         
         # Migrate data button
-        migrate_btn = QPushButton("Migrate Data to New Location")
+        migrate_btn = QPushButton("Migrate Data")
         migrate_btn.clicked.connect(self.migrate_data)
         buttons_layout.addWidget(migrate_btn)
+        buttons_layout.addStretch()
         
-        storage_section.addLayout(buttons_layout)
+        storage_section_layout.addLayout(buttons_layout)
         
         # Add some spacing
-        storage_section.addSpacing(20)
+        storage_section_layout.addSpacing(20)
         
-        layout.addLayout(storage_section)
+        layout.addWidget(storage_section)
+        
+        # Add stretch at the end
         layout.addStretch()
-        
         self.setLayout(layout)
+    
+    def create_section(self, title):
+        """Create a styled section with title"""
+        section = QFrame()
+        section.setObjectName("settingsSection")
+        
+        layout = QVBoxLayout()
+        layout.setSpacing(16)
+        
+        # Header
+        header = QLabel(title)
+        header.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 8px;")
+        layout.addWidget(header)
+        
+        section.setLayout(layout)
+        return section
+    
+    def toggle_theme(self):
+        if self.theme_manager:
+            self.theme_manager.toggle_theme()
     
     def change_storage_location(self):
         dialog = QFileDialog()

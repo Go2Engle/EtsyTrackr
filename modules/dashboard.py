@@ -1,7 +1,6 @@
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                           QPushButton, QFrame, QGridLayout, QSizePolicy, 
-                           QComboBox, QTableWidget, QTableWidgetItem,
-                            QHeaderView)
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
+                              QGridLayout, QSizePolicy, QPushButton, QComboBox, 
+                              QTableWidget, QTableWidgetItem, QHeaderView)
 from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtGui import QFont, QColor
 import pandas as pd
@@ -50,118 +49,161 @@ class StatCard(QFrame):
             self.title_label.setText(title)
 
 class ChartWidget(QFrame):
-    def __init__(self, parent=None):
+    def __init__(self, theme_manager, parent=None):
         super().__init__(parent)
+        self.theme_manager = theme_manager
         self.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
         layout = QVBoxLayout()
         
-        # Create figure and canvas
-        self.figure = Figure(figsize=(5, 4))
+        # Create matplotlib figure
+        self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
         layout.addWidget(self.canvas)
         
         self.setLayout(layout)
         
+        # Store current data for theme updates
+        self.current_data = None
+        self.current_chart_type = None
+        self.current_title = None
+        self.current_series_names = None
+        
+        # Connect theme change signal
+        if self.theme_manager:
+            self.theme_manager.theme_changed.connect(self.on_theme_changed)
+        
+        self.update_chart_theme()
+    
+    def on_theme_changed(self, is_dark):
+        # Replot the data with new theme if we have data
+        if self.current_data:
+            self.plot_data(
+                self.current_data,
+                self.current_chart_type,
+                self.current_title,
+                self.current_series_names
+            )
+    
+    def update_chart_theme(self):
+        is_dark = self.theme_manager.is_dark_mode() if self.theme_manager else False
+        theme = self.theme_manager.get_theme() if self.theme_manager else {}
+        
+        # Set figure background color
+        self.figure.patch.set_facecolor(theme.get('background', '#ffffff'))
+        
+        # Update all existing axes
+        for ax in self.figure.get_axes():
+            # Set axis background
+            ax.set_facecolor(theme.get('background', '#ffffff'))
+            
+            # Set text color
+            text_color = theme.get('text', '#000000')
+            ax.tick_params(colors=text_color)
+            ax.xaxis.label.set_color(text_color)
+            ax.yaxis.label.set_color(text_color)
+            if ax.title:
+                ax.title.set_color(text_color)
+            
+            # Set grid color
+            ax.grid(True, linestyle='--', alpha=0.2, color=theme.get('border', '#cccccc'))
+            
+            # Set spine colors
+            for spine in ax.spines.values():
+                spine.set_color(theme.get('border', '#cccccc'))
+        
+        self.canvas.draw()
+    
     def plot_data(self, data, chart_type='line', title='', series_names=None):
+        # Store current data for theme updates
+        self.current_data = data
+        self.current_chart_type = chart_type
+        self.current_title = title
+        self.current_series_names = series_names
+        
         self.figure.clear()
         ax = self.figure.add_subplot(111)
         
+        theme = self.theme_manager.get_theme() if self.theme_manager else {}
+        primary_color = theme.get('primary', '#1a73e8')
+        
         if chart_type == 'line':
-            # Convert dates to datetime if they're strings
             if isinstance(data['labels'][0], str):
-                dates = [datetime.strptime(d, '%Y-%m-%d') for d in data['labels']]
+                dates = [mdates.datestr2num(d) for d in data['labels']]
             else:
                 dates = data['labels']
             
-            # Plot line
-            ax.plot(dates, data['values'], marker='o')
+            # Plot line with theme color
+            ax.plot(dates, data['values'], marker='o', color=primary_color)
             
             # Format x-axis
             ax.set_xlabel('Date')
             ax.set_ylabel('Amount ($)')
             
-            # Rotate and align the tick labels so they look better
+            if isinstance(data['labels'][0], str):
+                ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+                ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+            
             plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
-            
-            # Use AutoDateFormatter for better date labels
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-            ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-            
-            # Add some padding to prevent label cutoff
             self.figure.subplots_adjust(bottom=0.2)
             
         elif chart_type == 'bar':
-            ax.bar(data['labels'], data['values'])
+            ax.bar(data['labels'], data['values'], color=primary_color)
             plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
             self.figure.subplots_adjust(bottom=0.2)
             
         elif chart_type == 'pie':
-            # Filter out zero values
             non_zero_values = []
             non_zero_labels = []
-            for val, label in zip(data['values'], data['labels']):
-                if val > 0:
-                    non_zero_values.append(val)
+            for value, label in zip(data['values'], data['labels']):
+                if value > 0:
+                    non_zero_values.append(value)
                     non_zero_labels.append(label)
             
             if non_zero_values:
-                ax.pie(non_zero_values, labels=non_zero_labels, autopct='%1.1f%%')
+                # Create color variations based on primary color
+                colors = [primary_color]
+                for i in range(1, len(non_zero_values)):
+                    # Adjust brightness for each slice
+                    colors.append(f"#{int(primary_color[1:], 16):06x}")
+                ax.pie(non_zero_values, labels=non_zero_labels, autopct='%1.1f%%', colors=colors)
         
         elif chart_type == 'stacked_bar':
-            # Create bottom array if it doesn't exist
-            if len(data['values']) > 1:
-                bottom = np.zeros_like(data['values'][0])
-                
-                # Plot each series
+            bottom = np.zeros(len(data['labels']))
+            if len(data['values']) > 0:
                 for i, values in enumerate(data['values']):
                     if len(values) > 0:  # Only plot if we have data
-                        ax.bar(data['labels'], values, bottom=bottom, 
-                              label=series_names[i] if series_names else f'Series {i}')
+                        # Create color variations for each series
+                        color = f"#{int(primary_color[1:], 16) + i*0x222222:06x}"
+                        ax.bar(data['labels'], values, bottom=bottom,
+                              label=series_names[i] if series_names else f'Series {i}',
+                              color=color)
                         bottom += values
             
             ax.legend()
-            
-            # Format y-axis to show dollar amounts
-            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.2f}'))
-            
-            # Format x-axis to show dates nicely
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-            ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-            
-            # Rotate and align the tick labels so they look better
             plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
-            
-            # Add gridlines for better readability
-            ax.yaxis.grid(True, linestyle='--', alpha=0.7)
-            
-            # Add labels
-            ax.set_xlabel('Date')
-            ax.set_ylabel('Amount ($)')
-            
-            # Adjust layout to prevent label cutoff
-            self.figure.subplots_adjust(bottom=0.2, left=0.15)
-
-        ax.set_title(title)
-        ax.grid(True, linestyle='--', alpha=0.7)
+            self.figure.subplots_adjust(bottom=0.2)
         
-        # Adjust layout to prevent label cutoff
-        self.figure.tight_layout()
+        if title:
+            ax.set_title(title)
         
-        self.canvas.draw()
+        self.update_chart_theme()
 
 class DashboardWidget(QWidget):
-    def __init__(self, db, sales_page):
+    def __init__(self, db, theme_manager, sales_page):
         super().__init__()
         self.db = db
+        self.theme_manager = theme_manager
         self.init_ui()
         
         # Set default to current month/year
-        current_year = str(datetime.now().year)
-        current_month = calendar.month_name[datetime.now().month]
-        self.year_filter.setCurrentText(current_year)
-        self.month_filter.setCurrentText(current_month)
+        self.current_month = datetime.now().month
+        self.current_year = datetime.now().year
+        
+        # Connect theme change signal
+        if self.theme_manager:
+            self.theme_manager.theme_changed.connect(self.on_theme_changed)
         
         # Initial refresh
         QTimer.singleShot(0, self.refresh_dashboard)
@@ -172,15 +214,19 @@ class DashboardWidget(QWidget):
         # Create filter controls
         filter_layout = QHBoxLayout()
         
+        # Year filter
         self.year_filter = QComboBox()
         current_year = datetime.now().year
-        self.year_filter.addItems(['All Years'] + [str(year) for year in range(current_year, current_year-5, -1)])
+        self.year_filter.addItems([str(year) for year in range(current_year, current_year-5, -1)])
         self.year_filter.currentTextChanged.connect(self.refresh_dashboard)
         filter_layout.addWidget(QLabel("Year:"))
         filter_layout.addWidget(self.year_filter)
         
+        # Month filter
         self.month_filter = QComboBox()
-        self.month_filter.addItems(['All Months'] + list(calendar.month_name)[1:])
+        self.month_filter.addItems(list(calendar.month_name)[1:])  # Skip empty first item
+        current_month = datetime.now().month
+        self.month_filter.setCurrentIndex(current_month - 1)  # Zero-based index
         self.month_filter.currentTextChanged.connect(self.refresh_dashboard)
         filter_layout.addWidget(QLabel("Month:"))
         filter_layout.addWidget(self.month_filter)
@@ -235,8 +281,8 @@ class DashboardWidget(QWidget):
         charts_grid = QGridLayout()
         
         # Create chart widgets
-        self.sales_chart = ChartWidget()
-        self.expenses_chart = ChartWidget()
+        self.sales_chart = ChartWidget(self.theme_manager)
+        self.expenses_chart = ChartWidget(self.theme_manager)
         
         # Add charts to grid
         charts_grid.addWidget(self.sales_chart, 0, 0)
@@ -494,3 +540,7 @@ class DashboardWidget(QWidget):
             
         except Exception as e:
             print(f"Error updating charts: {str(e)}")
+
+    def on_theme_changed(self, is_dark):
+        # Refresh all charts with current data
+        self.refresh_dashboard()
