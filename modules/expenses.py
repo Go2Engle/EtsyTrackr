@@ -70,10 +70,6 @@ class ExpensesWidget(QWidget):
         self.amount_edit = QLineEdit()
         self.amount_edit.setPlaceholderText("0.00")
         
-        # Category input
-        category_label = QLabel("Category:")
-        self.category_edit = QLineEdit()
-        
         # Receipt upload
         self.upload_btn = QPushButton("Upload Receipt")
         self.upload_btn.clicked.connect(self.upload_receipt)
@@ -88,8 +84,6 @@ class ExpensesWidget(QWidget):
         form_layout.addWidget(self.desc_edit)
         form_layout.addWidget(amount_label)
         form_layout.addWidget(self.amount_edit)
-        form_layout.addWidget(category_label)
-        form_layout.addWidget(self.category_edit)
         form_layout.addWidget(self.upload_btn)
         form_layout.addWidget(add_btn)
         
@@ -123,11 +117,12 @@ class ExpensesWidget(QWidget):
         
         # Store the path of the last selected receipt
         self.current_receipt_path = None
+        self.current_receipt_ext = None
     
     def setup_table(self):
         # Set up the table
-        self.table.setColumnCount(4)
-        headers = ["Date", "Description", "Amount", "Receipt"]
+        self.table.setColumnCount(5)  # Added one more column for ID
+        headers = ["Date", "Description", "Amount", "Receipt", "ID"]
         self.table.setHorizontalHeaderLabels(headers)
         
         # Enable context menu
@@ -138,7 +133,8 @@ class ExpensesWidget(QWidget):
         self.table.setColumnWidth(0, 100)  # Date
         self.table.setColumnWidth(1, 200)  # Description
         self.table.setColumnWidth(2, 80)   # Amount
-        self.table.setColumnWidth(3, 50)   # Receipt - Smaller width for compact buttons
+        self.table.setColumnWidth(3, 50)   # Receipt
+        self.table.setColumnWidth(4, 0)    # Hidden ID column
         
         # Set table properties
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -151,6 +147,8 @@ class ExpensesWidget(QWidget):
         header.setSectionResizeMode(1, QHeaderView.Stretch)  # Description column stretches
         for col in [0, 2, 3]:  # Fixed width for other columns
             header.setSectionResizeMode(col, QHeaderView.Fixed)
+        header.setSectionResizeMode(4, QHeaderView.Fixed)  # Fixed width for ID column
+        header.hideSection(4)  # Hide the ID column
     
     def upload_receipt(self):
         file_dialog = QFileDialog()
@@ -162,69 +160,66 @@ class ExpensesWidget(QWidget):
         )
         
         if file_path:
+            # Store the path for later use when adding the expense
+            _, ext = os.path.splitext(file_path)
             self.current_receipt_path = file_path
-            self.upload_btn.setText("Receipt Selected")
+            self.current_receipt_ext = ext
+            self.upload_btn.setText("✓ Receipt Selected")
     
     def add_expense(self):
         try:
-            # Get form data
-            date = self.date_edit.date().toPython()
+            # Get values from form
+            date = self.date_edit.date().toString('yyyy-MM-dd')
             description = self.desc_edit.text().strip()
-            amount_text = self.amount_edit.text().strip().replace('$', '').replace(',', '')
-            category = self.category_edit.text().strip()
+            amount_str = self.amount_edit.text().strip().replace('$', '')
             
-            # Validate inputs
+            # Validate input
             if not description:
-                QMessageBox.warning(self, "Error", "Please enter a description")
-                return
-                
+                raise ValueError("Description is required")
+            
             try:
-                amount = float(amount_text)
+                amount = float(amount_str)
             except ValueError:
-                QMessageBox.warning(self, "Error", "Please enter a valid amount")
-                return
+                raise ValueError("Invalid amount")
             
             # Add expense to database
             expense_data = {
-                'date': date.strftime('%Y-%m-%d'),
+                'date': date,
                 'description': description,
-                'amount': amount,
-                'category': category
+                'amount': amount
             }
             
+            # Add the expense first to get the ID
             expense_id = self.db.add_expense(expense_data)
             
             # Handle receipt if one was selected
             if self.current_receipt_path:
-                try:
-                    # Get file extension
-                    _, ext = os.path.splitext(self.current_receipt_path)
-                    
-                    # Create new filename with expense ID
-                    new_filename = f"receipt_{expense_id}{ext}"
-                    new_path = os.path.join(self.db.receipts_dir, new_filename)
-                    
-                    # Copy file to receipts directory
-                    shutil.copy2(self.current_receipt_path, new_path)
-                    
-                    # Update expense with receipt file
-                    self.db.update_expense(expense_id, {'receipt_file': new_filename})
-                    
-                except Exception as e:
-                    QMessageBox.warning(self, "Warning", f"Failed to save receipt: {str(e)}")
+                # Create descriptive filename using the same format as upload_receipt_for_expense
+                safe_description = re.sub(r'[^\w\s-]', '', description)  # Remove special chars
+                safe_description = re.sub(r'\s+', '_', safe_description.strip())    # Replace spaces with _
+                safe_description = safe_description[:50]  # Limit length
+                
+                new_filename = f"{date}_{safe_description}_id{expense_id}{self.current_receipt_ext}"
+                new_path = os.path.join(self.db.receipts_dir, new_filename)
+                
+                # Copy file to receipts directory
+                shutil.copy2(self.current_receipt_path, new_path)
+                
+                # Update expense with receipt file
+                self.db.update_expense(expense_id, new_filename)
             
             # Clear form
             self.desc_edit.clear()
             self.amount_edit.clear()
-            self.category_edit.clear()
             self.upload_btn.setText("Upload Receipt")
             self.current_receipt_path = None
+            self.current_receipt_ext = None
             
             # Refresh table
             self.refresh_table()
             
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to add expense: {str(e)}")
+            QMessageBox.critical(self, "Error", str(e))
     
     def show_context_menu(self, position):
         menu = QMenu(self)
@@ -235,10 +230,10 @@ class ExpensesWidget(QWidget):
         if row >= 0:  # Only show menu if clicked on a valid row
             action = menu.exec(self.table.viewport().mapToGlobal(position))
             if action == delete_action:
-                # Get expense ID from the hidden data in the date column
-                date_item = self.table.item(row, 0)
-                if date_item:
-                    expense_id = date_item.data(Qt.ItemDataRole.UserRole)
+                # Get expense ID from the hidden ID column
+                id_item = self.table.item(row, 4)  # ID is in column 4
+                if id_item:
+                    expense_id = int(id_item.text())  # Convert to int since IDs are stored as integers
                     self.delete_expense(expense_id)
     
     def delete_expense(self, expense_id):
@@ -254,22 +249,31 @@ class ExpensesWidget(QWidget):
             self.db.delete_expense(expense_id)
             self.refresh_table()
     
-    def add_expense_to_table(self, row, date, description, amount, category, receipt_filename):
+    def add_expense_to_table(self, row, date, description, amount, receipt_file, expense_id):
+        # Date
         self.table.setItem(row, 0, QTableWidgetItem(date))
+        
+        # Description
         self.table.setItem(row, 1, QTableWidgetItem(description))
-        self.table.setItem(row, 2, QTableWidgetItem(f"${amount:,.2f}"))
-        self.table.setItem(row, 3, QTableWidgetItem(category))
         
-        # Create view button
-        if receipt_filename:
-            view_btn = QPushButton("View")
-            view_btn.clicked.connect(lambda: self.view_receipt(receipt_filename))
-            self.table.setCellWidget(row, 3, view_btn)
+        # Amount
+        amount_item = QTableWidgetItem(f"${float(amount):.2f}")
+        amount_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.table.setItem(row, 2, amount_item)
+        
+        # Receipt button/indicator
+        if receipt_file and isinstance(receipt_file, str):  # Make sure receipt_file is a string
+            btn = QPushButton("View")
+            btn.clicked.connect(lambda: self.view_receipt(receipt_file))
+            self.table.setCellWidget(row, 3, btn)
         else:
-            upload_btn = QPushButton("Upload")
-            upload_btn.clicked.connect(lambda: self.upload_receipt_for_expense(row))
-            self.table.setCellWidget(row, 3, upload_btn)
-        
+            btn = QPushButton("Add")
+            btn.clicked.connect(lambda: self.upload_receipt_for_expense(expense_id))
+            self.table.setCellWidget(row, 3, btn)
+            
+        # Hidden ID column
+        self.table.setItem(row, 4, QTableWidgetItem(str(expense_id)))
+    
     def upload_receipt_for_expense(self, expense_id):
         try:
             file_dialog = QFileDialog()
@@ -313,6 +317,17 @@ class ExpensesWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to upload receipt: {str(e)}")
     
+    def view_receipt(self, filename):
+        if not isinstance(filename, str):  # Add type check
+            QMessageBox.warning(self, "Error", "Invalid receipt filename")
+            return
+            
+        receipt_path = os.path.join(self.db.receipts_dir, filename)
+        if os.path.exists(receipt_path):
+            os.startfile(receipt_path)
+        else:
+            QMessageBox.warning(self, "Error", "Receipt file not found")
+    
     def refresh_table(self):
         # Clear table
         self.table.setRowCount(0)
@@ -338,7 +353,7 @@ class ExpensesWidget(QWidget):
                 continue
                 
             # Search filter
-            if search_text and search_text not in expense['description'].lower() and search_text not in expense.get('category', '').lower():
+            if search_text and search_text not in expense['description'].lower():
                 continue
                 
             filtered_expenses.append(expense)
@@ -351,8 +366,8 @@ class ExpensesWidget(QWidget):
                 expense['date'],
                 expense['description'],
                 expense['amount'],
-                expense.get('category', ''),  # Handle missing category
-                expense.get('receipt_file')
+                expense.get('receipt_file'),
+                expense['id']
             )
         
         # Update stats
@@ -361,10 +376,3 @@ class ExpensesWidget(QWidget):
         
         self.total_expenses_label.setText(f"Total: ${total_amount:,.2f}")
         self.num_expenses_label.setText(f"Count: {num_expenses:,}")
-    
-    def view_receipt(self, filename):
-        receipt_path = os.path.join(self.db.receipts_dir, filename)
-        if os.path.exists(receipt_path):
-            os.startfile(receipt_path)
-        else:
-            QMessageBox.warning(self, "Error", "Receipt file not found")
