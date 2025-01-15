@@ -28,6 +28,7 @@ class Database:
         - date: date string in ISO format
         - description: string
         - amount: float
+        - category: string
         - receipt_file: optional string, path to receipt
         """
         with open(self.expenses_file, 'r') as f:
@@ -38,6 +39,7 @@ class Database:
             'date': expense_data['date'],
             'description': expense_data['description'],
             'amount': expense_data['amount'],
+            'category': expense_data.get('category', ''),
             'receipt_file': expense_data.get('receipt_file')
         }
         
@@ -346,8 +348,8 @@ class Database:
         with open(self.expenses_file, 'w') as f:
             json.dump(expenses, f)
 
-    def update_expense(self, expense_id, receipt_path=None):
-        """Update an expense's receipt path in the database"""
+    def update_expense(self, expense_id, receipt_path=None, category=None):
+        """Update an expense's receipt path or category in the database"""
         try:
             with open(self.expenses_file, 'r') as f:
                 expenses = json.load(f)
@@ -357,6 +359,11 @@ class Database:
                     if expense['id'] == expense_id:
                         # Store receipt path directly as string
                         expense['receipt_file'] = receipt_path
+                        break
+            if category:
+                for expense in expenses:
+                    if expense['id'] == expense_id:
+                        expense['category'] = category
                         break
             
             with open(self.expenses_file, 'w') as f:
