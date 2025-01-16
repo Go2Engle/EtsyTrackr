@@ -87,7 +87,7 @@ class MainWindow(QMainWindow):
         self.main_content.add_widget(self.dashboard, "Dashboard")
         
         # Create and add sales
-        self.sales = SalesWidget(self.db)
+        self.sales = SalesWidget(self.db, self.theme_manager)
         self.main_content.add_widget(self.sales, "Sales")
         
         # Create and add expenses
