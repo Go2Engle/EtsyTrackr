@@ -96,13 +96,33 @@ class SalesWidget(QWidget):
             'Listing Fee', 'Net'
         ])
         
-        # Set column widths
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
-        self.table.setColumnWidth(0, 100)  # Date
-        self.table.setColumnWidth(1, 100)  # Order ID
-        self.table.setColumnWidth(2, 300)  # Items
-        for i in range(3, 11):  # Financial columns
-            self.table.setColumnWidth(i, 100)
+        # Set table properties
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SingleSelection)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setShowGrid(True)
+        
+        # Set column widths and resize modes
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(2, QHeaderView.Stretch)  # Items column stretches
+        
+        # Fixed widths for other columns
+        fixed_widths = {
+            0: 100,  # Date
+            1: 100,  # Order ID
+            3: 100,  # Sale Amount
+            4: 100,  # Shipping Fee
+            5: 100,  # Sales Tax
+            6: 100,  # Ship Trans Fee
+            7: 100,  # Item Trans Fee
+            8: 100,  # Processing Fee
+            9: 100,  # Listing Fee
+            10: 100  # Net
+        }
+        
+        for col, width in fixed_widths.items():
+            self.table.setColumnWidth(col, width)
+            header.setSectionResizeMode(col, QHeaderView.Fixed)
         
         # Enable context menu
         self.table.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -269,76 +289,61 @@ class SalesWidget(QWidget):
                 items_item = QTableWidgetItem(str(row['Items']))
                 self.table.setItem(i, 2, items_item)
                 
-                # Sale Amount
-                sale_amount = row['Sale Amount']
-                sale_item = QTableWidgetItem(f"${sale_amount:,.2f}")
-                if '[REFUNDED]' in str(row['Items']):
-                    sale_item.setForeground(QBrush(QColor('red')))
-                    total_refunds -= sale_amount  # Negate the amount to make refunds negative
-                if sale_amount > 0:  # Count all positive sales, even if refunded
-                    total_sales += sale_amount
-                self.table.setItem(i, 3, sale_item)
+                # Financial columns with right alignment
+                financial_cols = [
+                    ('Sale Amount', 3),
+                    ('Shipping Fee', 4),
+                    ('Sales Tax', 5),
+                    ('Shipping Transaction Fee', 6),
+                    ('Item Transaction Fee', 7),
+                    ('Processing Fee', 8),
+                    ('Listing Fee', 9),
+                    ('Net', 10)
+                ]
                 
-                # Shipping Fee
-                shipping = row['Shipping Fee']
-                shipping_item = QTableWidgetItem(f"${shipping:,.2f}")
-                if 'Label #' in str(row['Order ID']):  # This is a shipping label entry
-                    shipping_item.setForeground(QBrush(QColor('red')))
-                self.table.setItem(i, 4, shipping_item)
-                total_shipping += shipping
+                for col_name, col_idx in financial_cols:
+                    amount = row.get(col_name, 0)
+                    if pd.isna(amount):
+                        amount = 0
+                    item = QTableWidgetItem(f"${float(amount):.2f}")
+                    item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                    
+                    # Color negative values in red
+                    if float(amount) < 0:
+                        item.setForeground(QBrush(QColor('red')))
+                    
+                    self.table.setItem(i, col_idx, item)
+                    
+                    if col_name == 'Sale Amount':
+                        if '[REFUNDED]' in str(row['Items']):
+                            item.setForeground(QBrush(QColor('red')))
+                            total_refunds -= float(amount)  # Negate the amount to make refunds negative
+                        if float(amount) > 0:  # Count all positive sales, even if refunded
+                            total_sales += float(amount)
+                    elif col_name == 'Shipping Fee':
+                        if 'Label #' in str(row['Order ID']):  # This is a shipping label entry
+                            item.setForeground(QBrush(QColor('red')))
+                        total_shipping += float(amount)
+                    elif col_name == 'Sales Tax':
+                        total_tax += float(amount)
+                    elif col_name == 'Shipping Transaction Fee' or col_name == 'Item Transaction Fee':
+                        total_transaction_fees += float(amount)
+                    elif col_name == 'Processing Fee':
+                        total_processing_fees += float(amount)
+                    elif col_name == 'Listing Fee':
+                        total_listing_fees += float(amount)
+                    elif col_name == 'Net':
+                        if float(amount) < 0:
+                            item.setForeground(QBrush(QColor('red')))
                 
-                # Sales Tax
-                tax = row['Sales Tax']
-                tax_item = QTableWidgetItem(f"${tax:,.2f}")
-                self.table.setItem(i, 5, tax_item)
-                total_tax += tax
-                
-                # Transaction Fees
-                ship_fee = row['Shipping Transaction Fee']
-                ship_fee_item = QTableWidgetItem(f"${ship_fee:,.2f}")
-                if ship_fee != 0:
-                    ship_fee_item.setForeground(QBrush(QColor('red')))
-                self.table.setItem(i, 6, ship_fee_item)
-                total_transaction_fees += ship_fee
-                
-                item_fee = row['Item Transaction Fee']
-                item_fee_item = QTableWidgetItem(f"${item_fee:,.2f}")
-                if item_fee != 0:
-                    item_fee_item.setForeground(QBrush(QColor('red')))
-                self.table.setItem(i, 7, item_fee_item)
-                total_transaction_fees += item_fee
-                
-                # Processing Fee
-                proc_fee = row['Processing Fee']
-                proc_fee_item = QTableWidgetItem(f"${proc_fee:,.2f}")
-                if proc_fee != 0:
-                    proc_fee_item.setForeground(QBrush(QColor('red')))
-                self.table.setItem(i, 8, proc_fee_item)
-                total_processing_fees += proc_fee
-                
-                # Listing Fee
-                list_fee = row['Listing Fee']
-                list_fee_item = QTableWidgetItem(f"${list_fee:,.2f}")
-                if 'Listing #' in str(row['Order ID']) or list_fee != 0:  # This is a listing fee entry or has a fee
-                    list_fee_item.setForeground(QBrush(QColor('red')))
-                self.table.setItem(i, 9, list_fee_item)
-                total_listing_fees += list_fee
-                
-                # Net
-                net = row['Net']
-                net_item = QTableWidgetItem(f"${net:,.2f}")
-                if net < 0:
-                    net_item.setForeground(QBrush(QColor('red')))
-                self.table.setItem(i, 10, net_item)
-            
-            # Calculate net profit
-            net_profit = (total_sales + 
-                       total_shipping +
-                       total_transaction_fees + 
-                       total_listing_fees + 
-                       total_processing_fees +
-                       total_tax +
-                       total_refunds)  # Refunds are now properly negative
+                # Calculate net profit
+                net_profit = (total_sales + 
+                           total_shipping +
+                           total_transaction_fees + 
+                           total_listing_fees + 
+                           total_processing_fees +
+                           total_tax +
+                           total_refunds)  # Refunds are now properly negative
             
             # Create status text with all totals
             status_parts = [
