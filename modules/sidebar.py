@@ -42,6 +42,7 @@ class Sidebar(QFrame):
     def __init__(self, theme_manager=None, parent=None):
         super().__init__(parent)
         self.setObjectName("sidebar")
+        self.setFrameStyle(QFrame.NoFrame)
         self.expanded = False
         self.MINIMIZED_WIDTH = 72
         self.EXPANDED_WIDTH = 260
@@ -75,11 +76,13 @@ class Sidebar(QFrame):
         if os.path.exists(icon_path):
             self.logo.setPixmap(QIcon(icon_path).pixmap(QSize(24, 24)))
         self.logo.setObjectName("appLogo")
+        self.logo.setAttribute(Qt.WA_TranslucentBackground)
         title_layout.addWidget(self.logo)
         
         # App title
         self.title = QLabel("EtsyTrackr")
         self.title.setObjectName("sidebarTitle")
+        self.title.setAttribute(Qt.WA_TranslucentBackground)
         self.title.hide()
         title_layout.addWidget(self.title)
         

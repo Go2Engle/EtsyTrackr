@@ -126,7 +126,6 @@ class ThemeManager(QObject):
             
             #sidebar {{
                 background-color: {theme['surface']};
-                border-right: 1px solid {theme['border']};
             }}
             
             #sidebarTitle {{
