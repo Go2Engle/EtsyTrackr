@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                            QTableWidget, QTableWidgetItem, QHeaderView,
                            QMessageBox, QMenu, QComboBox)
 from PySide6.QtCore import Qt, QDate
-from PySide6.QtGui import QCursor
+from PySide6.QtGui import QCursor, QDesktopServices, QBrush, QColor, QIcon
 from qtawesome import icon
 import os
 import json
@@ -16,6 +16,7 @@ class ExpensesWidget(QWidget):
     def __init__(self, db):
         super().__init__()
         self.db = db
+        self.app_icon = QIcon(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'icon.png'))
         self.setup_ui()
         
     def setup_ui(self):
@@ -219,7 +220,7 @@ class ExpensesWidget(QWidget):
             self.refresh_table()
             
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            QMessageBox.critical(self, "Expense Error", str(e))
     
     def show_context_menu(self, position):
         menu = QMenu(self)
@@ -237,13 +238,14 @@ class ExpensesWidget(QWidget):
                     self.delete_expense(expense_id)
     
     def delete_expense(self, expense_id):
-        reply = QMessageBox.question(
-            self,
-            'Delete Expense',
-            'Are you sure you want to delete this expense?',
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
-        )
+        msg = QMessageBox()
+        msg.setWindowIcon(self.app_icon)
+        msg.setWindowTitle("Delete Expense")
+        msg.setText('Are you sure you want to delete this expense?')
+        msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        msg.setDefaultButton(QMessageBox.StandardButton.No)
+        
+        reply = msg.exec()
         
         if reply == QMessageBox.StandardButton.Yes:
             self.db.delete_expense(expense_id)
@@ -315,18 +317,18 @@ class ExpensesWidget(QWidget):
                     raise Exception("Expense not found")
                 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to upload receipt: {str(e)}")
+            QMessageBox.critical(self, "Receipt Upload Error", f"Failed to upload receipt: {str(e)}")
     
     def view_receipt(self, filename):
         if not isinstance(filename, str):  # Add type check
-            QMessageBox.warning(self, "Error", "Invalid receipt filename")
+            QMessageBox.warning(self, "Invalid Receipt", "Invalid receipt filename")
             return
             
         receipt_path = os.path.join(self.db.receipts_dir, filename)
         if os.path.exists(receipt_path):
             os.startfile(receipt_path)
         else:
-            QMessageBox.warning(self, "Error", "Receipt file not found")
+            QMessageBox.warning(self, "Missing Receipt", "Receipt file not found")
     
     def refresh_table(self):
         # Clear table

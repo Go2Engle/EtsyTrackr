@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                            QPushButton, QTableWidget, QTableWidgetItem,
                            QHeaderView, QComboBox, QFileDialog, QMessageBox, QCheckBox, QMenu, QApplication)
 from PySide6.QtCore import Qt, QDate, QUrl, QTimer, Signal
-from PySide6.QtGui import QDesktopServices, QBrush, QColor
+from PySide6.QtGui import QDesktopServices, QBrush, QColor, QIcon
 import pandas as pd
 import os
 import re
@@ -16,6 +16,7 @@ class SalesWidget(QWidget):
     def __init__(self, db):
         super().__init__()
         self.db = db
+        self.app_icon = QIcon(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'icon.png'))
         self.init_ui()
         
         # Create a timer for auto-refresh (every 5 minutes)
@@ -406,6 +407,8 @@ class SalesWidget(QWidget):
                 if statement_files_by_month:
                     # Ask user if they want to import the found files
                     msg = QMessageBox()
+                    msg.setWindowIcon(self.app_icon)
+                    msg.setWindowTitle("Import Statements")
                     msg.setIcon(QMessageBox.Information)
                     msg.setText(f"Found statement files for {len(statement_files_by_month)} month(s) in Downloads folder.")
                     msg.setInformativeText("Would you like to import them? This will replace any existing statements for these months.")

@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                            QPushButton, QFileDialog, QMessageBox, QFrame)
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QIcon
 import os
 import shutil
 
@@ -9,9 +10,10 @@ class SettingsWidget(QWidget):
     
     def __init__(self, settings, db, theme_manager=None):
         super().__init__()
+        self.theme_manager = theme_manager
+        self.app_icon = QIcon(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'icon.png'))
         self.settings = settings
         self.db = db
-        self.theme_manager = theme_manager
         self.setup_ui()
     
     def setup_ui(self):
@@ -40,11 +42,6 @@ class SettingsWidget(QWidget):
         # Storage Location Section
         storage_section = self.create_section("Data Storage")
         storage_section_layout = storage_section.layout()
-        
-        # Header
-        storage_header = QLabel("Data Storage")
-        storage_header.setStyleSheet("font-size: 16px; font-weight: bold;")
-        storage_section_layout.addWidget(storage_header)
         
         # Current location
         current_location = QLabel(f"Current Location: {self.settings.value('storage_location')}")
@@ -105,8 +102,10 @@ class SettingsWidget(QWidget):
             
             # Confirm change
             msg = QMessageBox()
+            msg.setWindowIcon(self.app_icon)
             msg.setIcon(QMessageBox.Icon.Question)
-            msg.setText("Change Storage Location")
+            msg.setWindowTitle("Storage Location")
+            msg.setText("Change Data Directory")
             msg.setInformativeText("This will only change where new files are stored. "
                                 "Use the 'Migrate Data' button to move existing files. "
                                 "Continue?")
@@ -119,7 +118,7 @@ class SettingsWidget(QWidget):
                 # Update the displayed location
                 self.refresh_ui()
                 
-                QMessageBox.information(self, "Success", 
+                QMessageBox.information(self, "Storage Location Changed", 
                     "Storage location updated successfully. New data will be stored here.")
                 
                 # Emit signal for other components to update
@@ -135,7 +134,7 @@ class SettingsWidget(QWidget):
             
             # Don't migrate if source and destination are the same
             if new_path == self.settings.value('storage_location'):
-                QMessageBox.warning(self, "Error", 
+                QMessageBox.warning(self, "Storage Location Error", 
                     "New location is the same as the current location.")
                 return
             
@@ -170,11 +169,11 @@ class SettingsWidget(QWidget):
                 # Update the displayed location
                 self.refresh_ui()
                 
-                QMessageBox.information(self, "Success", 
+                QMessageBox.information(self, "Storage Location Changed", 
                     "All data has been migrated to the new location successfully.")
                 
             except Exception as e:
-                QMessageBox.critical(self, "Error", 
+                QMessageBox.critical(self, "Storage Location Error", 
                     f"Failed to migrate data: {str(e)}")
     
     def refresh_ui(self):

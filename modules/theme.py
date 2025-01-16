@@ -55,8 +55,8 @@ class ThemeManager(QObject):
         self.theme_changed.emit(self._dark_mode)
     
     def apply_theme(self):
+        self.settings.setValue('dark_mode', self._dark_mode)
         theme = self.get_theme()
-        app = QApplication.instance()
         
         # Create the base palette
         palette = QPalette()
@@ -82,10 +82,39 @@ class ThemeManager(QObject):
         palette.setColor(QPalette.HighlightedText, QColor(theme['background']))
         
         # Apply the palette
+        app = QApplication.instance()
         app.setPalette(palette)
         
         # Apply stylesheet
-        app.setStyleSheet(f"""
+        style = f"""
+            QWidget {{
+                color: {theme['text']};
+                background-color: {theme['background']};
+            }}
+            
+            QMessageBox {{
+                background-color: {theme['surface']};
+                color: {theme['text']};
+            }}
+            
+            QMessageBox QLabel {{
+                color: {theme['text']};
+                background-color: transparent;
+            }}
+            
+            QMessageBox QPushButton {{
+                background-color: {theme['primary']};
+                color: {theme['background']};
+                border: none;
+                padding: 5px 15px;
+                border-radius: 4px;
+                min-width: 80px;
+            }}
+            
+            QMessageBox QPushButton:hover {{
+                background-color: {theme['secondary']};
+            }}
+            
             QMainWindow {{
                 background-color: {theme['background']};
             }}
@@ -361,4 +390,5 @@ class ThemeManager(QObject):
                 background-color: {theme['border']};
                 margin: 4px 0px;
             }}
-        """)
+        """
+        app.setStyleSheet(style)
