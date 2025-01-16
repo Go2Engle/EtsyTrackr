@@ -31,142 +31,142 @@ jobs:
         with:
           files: dist/EtsyTrackr.exe
 
-  build-macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
+  # build-macos:
+  #   runs-on: macos-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.11.8
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: 3.11.8
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+  #     - name: Install dependencies
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install -r requirements.txt
 
-      - name: Build executable
-        run: python build.py
+  #     - name: Build executable
+  #       run: python build.py
 
-      - name: Create DMG
-        run: |
-          # Free up more space
-          df -h
-          sudo rm -rf /usr/local/.ghcup
-          sudo rm -rf /usr/local/share/powershell
-          sudo rm -rf /usr/local/share/chromium
-          sudo rm -rf /usr/local/lib/node_modules
-          sudo rm -rf /Library/Developer/CommandLineTools
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/share/swift
-          brew cleanup
-          df -h
+  #     - name: Create DMG
+  #       run: |
+  #         # Free up more space
+  #         df -h
+  #         sudo rm -rf /usr/local/.ghcup
+  #         sudo rm -rf /usr/local/share/powershell
+  #         sudo rm -rf /usr/local/share/chromium
+  #         sudo rm -rf /usr/local/lib/node_modules
+  #         sudo rm -rf /Library/Developer/CommandLineTools
+  #         sudo rm -rf /usr/share/dotnet
+  #         sudo rm -rf /usr/share/swift
+  #         brew cleanup
+  #         df -h
           
-          # Create a smaller working directory
-          WORK_DIR="/private/tmp/etsytrackr_build"
-          sudo mkdir -p "$WORK_DIR"
-          sudo chmod 777 "$WORK_DIR"
+  #         # Create a smaller working directory
+  #         WORK_DIR="/private/tmp/etsytrackr_build"
+  #         sudo mkdir -p "$WORK_DIR"
+  #         sudo chmod 777 "$WORK_DIR"
           
-          # Move necessary files to working directory
-          cp -r dist/EtsyTrackr "$WORK_DIR/"
-          cp assets/icon.png "$WORK_DIR/"
-          cd "$WORK_DIR"
+  #         # Move necessary files to working directory
+  #         cp -r dist/EtsyTrackr "$WORK_DIR/"
+  #         cp assets/icon.png "$WORK_DIR/"
+  #         cd "$WORK_DIR"
           
-          # Create app bundle
-          mkdir -p EtsyTrackr.app/Contents/{MacOS,Resources}
-          mv EtsyTrackr EtsyTrackr.app/Contents/MacOS/
-          cp icon.png EtsyTrackr.app/Contents/Resources/
+  #         # Create app bundle
+  #         mkdir -p EtsyTrackr.app/Contents/{MacOS,Resources}
+  #         mv EtsyTrackr EtsyTrackr.app/Contents/MacOS/
+  #         cp icon.png EtsyTrackr.app/Contents/Resources/
           
-          # Create Info.plist
-          cat > EtsyTrackr.app/Contents/Info.plist << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>CFBundleExecutable</key>
-              <string>EtsyTrackr</string>
-              <key>CFBundleIconFile</key>
-              <string>icon.png</string>
-              <key>CFBundleIdentifier</key>
-              <string>com.etsytrackr.app</string>
-              <key>CFBundleName</key>
-              <string>EtsyTrackr</string>
-              <key>CFBundlePackageType</key>
-              <string>APPL</string>
-              <key>CFBundleShortVersionString</key>
-              <string>1.0</string>
-              <key>LSMinimumSystemVersion</key>
-              <string>10.10</string>
-              <key>NSHighResolutionCapable</key>
-              <true/>
-          </dict>
-          </plist>
-          EOF
+  #         # Create Info.plist
+  #         cat > EtsyTrackr.app/Contents/Info.plist << EOF
+  #         <?xml version="1.0" encoding="UTF-8"?>
+  #         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+  #         <plist version="1.0">
+  #         <dict>
+  #             <key>CFBundleExecutable</key>
+  #             <string>EtsyTrackr</string>
+  #             <key>CFBundleIconFile</key>
+  #             <string>icon.png</string>
+  #             <key>CFBundleIdentifier</key>
+  #             <string>com.etsytrackr.app</string>
+  #             <key>CFBundleName</key>
+  #             <string>EtsyTrackr</string>
+  #             <key>CFBundlePackageType</key>
+  #             <string>APPL</string>
+  #             <key>CFBundleShortVersionString</key>
+  #             <string>1.0</string>
+  #             <key>LSMinimumSystemVersion</key>
+  #             <string>10.10</string>
+  #             <key>NSHighResolutionCapable</key>
+  #             <true/>
+  #         </dict>
+  #         </plist>
+  #         EOF
           
-          # Create DMG with reduced size
-          hdiutil create -size 200m -volname "EtsyTrackr" -srcfolder EtsyTrackr.app -ov -format UDZO EtsyTrackr.dmg
+  #         # Create DMG with reduced size
+  #         hdiutil create -size 200m -volname "EtsyTrackr" -srcfolder EtsyTrackr.app -ov -format UDZO EtsyTrackr.dmg
           
-          # Move DMG back to dist directory
-          mv EtsyTrackr.dmg "$GITHUB_WORKSPACE/dist/"
+  #         # Move DMG back to dist directory
+  #         mv EtsyTrackr.dmg "$GITHUB_WORKSPACE/dist/"
 
-      - name: Upload Release Asset
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/EtsyTrackr.dmg
+  #     - name: Upload Release Asset
+  #       uses: softprops/action-gh-release@v2
+  #       with:
+  #         files: dist/EtsyTrackr.dmg
 
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  # build-linux:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.11.8
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: 3.11.8
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libxcb-xinerama0 fuse libfuse2
+  #     - name: Install system dependencies
+  #       run: |
+  #         sudo apt-get update
+  #         sudo apt-get install -y libxcb-xinerama0 fuse libfuse2
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+  #     - name: Install dependencies
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install -r requirements.txt
 
-      - name: Build executable
-        run: python build.py
+  #     - name: Build executable
+  #       run: python build.py
 
-      - name: Create AppImage
-        run: |
-          cd dist
-          mkdir -p EtsyTrackr.AppDir
-          cp etsytrackr EtsyTrackr.AppDir/AppRun
-          chmod +x EtsyTrackr.AppDir/AppRun
+  #     - name: Create AppImage
+  #       run: |
+  #         cd dist
+  #         mkdir -p EtsyTrackr.AppDir
+  #         cp etsytrackr EtsyTrackr.AppDir/AppRun
+  #         chmod +x EtsyTrackr.AppDir/AppRun
           
-          # Create desktop entry file
-          cat > EtsyTrackr.AppDir/etsytrackr.desktop << EOF
-          [Desktop Entry]
-          Name=EtsyTrackr
-          Exec=AppRun
-          Icon=etsytrackr
-          Type=Application
-          Categories=Utility;
-          EOF
+  #         # Create desktop entry file
+  #         cat > EtsyTrackr.AppDir/etsytrackr.desktop << EOF
+  #         [Desktop Entry]
+  #         Name=EtsyTrackr
+  #         Exec=AppRun
+  #         Icon=etsytrackr
+  #         Type=Application
+  #         Categories=Utility;
+  #         EOF
           
-          # Copy icon
-          cp ../assets/icon.png EtsyTrackr.AppDir/etsytrackr.png
+  #         # Copy icon
+  #         cp ../assets/icon.png EtsyTrackr.AppDir/etsytrackr.png
           
-          # Download and extract appimagetool
-          wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-          chmod +x appimagetool-x86_64.AppImage
-          ./appimagetool-x86_64.AppImage --appimage-extract
+  #         # Download and extract appimagetool
+  #         wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+  #         chmod +x appimagetool-x86_64.AppImage
+  #         ./appimagetool-x86_64.AppImage --appimage-extract
           
-          # Create AppImage
-          ARCH=x86_64 ./squashfs-root/AppRun EtsyTrackr.AppDir EtsyTrackr.AppImage
+  #         # Create AppImage
+  #         ARCH=x86_64 ./squashfs-root/AppRun EtsyTrackr.AppDir EtsyTrackr.AppImage
 
-      - name: Upload Release Asset
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/EtsyTrackr.AppImage
+  #     - name: Upload Release Asset
+  #       uses: softprops/action-gh-release@v2
+  #       with:
+  #         files: dist/EtsyTrackr.AppImage
