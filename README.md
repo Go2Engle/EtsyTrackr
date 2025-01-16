@@ -9,30 +9,43 @@
 
 A desktop application to help Etsy sellers track their business finances, including sales, expenses, and profits.
 
+<p align="center">
+    <img src="screenshots/dashboard.png" width="500" alt="EtsyTrackr Dashboard Light Mode">
+    <img src="screenshots/dashboard-dark.png" width="500" alt="EtsyTrackr Dashboard Dark Mode">
+</p>
+
 ## Platform Support
 
 | Platform | Status | Notes |
 |----------|--------|-------|
 | Windows  | ✅ Tested | Primary development platform |
-| macOS    | ⚠️ Untested | Build available but not verified |
-| Linux    | ⚠️ Untested | Build available but not verified |
+| macOS    | ⚠️ Untested | Build not available |
+| Linux    | ⚠️ Untested | Build not available |
 
 ## Screenshots
 
 ### Dashboard
-<img src="screenshots/dashboard.png" width="600" alt="Dashboard">
+<p align="center">
+    <img src="screenshots/dashboard-dark.png" width="600" alt="Dashboard Dark Mode">
+</p>
 Real-time overview of your business performance with sales trends and expense breakdowns.
 
 ### Sales Tracking
-<img src="screenshots/sales.png" width="600" alt="Sales">
+<p align="center">
+    <img src="screenshots/sales-dark.png" width="600" alt="Sales Dark Mode">
+</p>
 Import and manage your Etsy sales statements with detailed breakdowns.
 
 ### Expense Management
-<img src="screenshots/expenses.png" width="600" alt="Expenses">
+<p align="center">
+    <img src="screenshots/expenses-dark.png" width="600" alt="Expenses Dark Mode">
+</p>
 Track your business expenses and manage receipts.
 
 ### Settings
-<img src="screenshots/settings.png" width="600" alt="Settings">
+<p align="center">
+    <img src="screenshots/settings-dark.png" width="600" alt="Settings Dark Mode">
+</p>
 Customize your application settings.
 
 ## About
