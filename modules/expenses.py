@@ -131,26 +131,29 @@ class ExpensesWidget(QWidget):
         self.table.customContextMenuRequested.connect(self.show_context_menu)
         
         # Set column widths
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)  # Date
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # Description
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)  # Amount
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Interactive)  # Receipt
+        
+        # Set initial column widths
         self.table.setColumnWidth(0, 100)  # Date
-        self.table.setColumnWidth(1, 200)  # Description
-        self.table.setColumnWidth(2, 80)   # Amount
-        self.table.setColumnWidth(3, 50)   # Receipt
-        self.table.setColumnWidth(4, 0)    # Hidden ID column
+        self.table.setColumnWidth(2, 100)  # Amount
+        self.table.setColumnWidth(3, 120)  # Receipt
+        
+        # Hide ID column
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)  # ID column
+        header.hideSection(4)  # Hide the ID column
         
         # Set table properties
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setSelectionMode(QTableWidget.SingleSelection)
         self.table.verticalHeader().setVisible(False)
         self.table.setShowGrid(True)
+        self.table.setWordWrap(True)  # Enable word wrap
+        self.table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)  # Auto-adjust row height
         
-        # Set resize modes
-        header = self.table.horizontalHeader()
-        header.setSectionResizeMode(1, QHeaderView.Stretch)  # Description column stretches
-        for col in [0, 2, 3]:  # Fixed width for other columns
-            header.setSectionResizeMode(col, QHeaderView.Fixed)
-        header.setSectionResizeMode(4, QHeaderView.Fixed)  # Fixed width for ID column
-        header.hideSection(4)  # Hide the ID column
-    
     def upload_receipt(self):
         file_dialog = QFileDialog()
         file_path, _ = file_dialog.getOpenFileName(

@@ -174,28 +174,25 @@ class SalesWidget(QWidget):
         self.table.setSelectionMode(QTableWidget.SingleSelection)
         self.table.verticalHeader().setVisible(False)
         self.table.setShowGrid(True)
+        #self.table.setWordWrap(True)  # Enable word wrap
+        self.table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)  # Auto-adjust row height
         
         # Set column widths and resize modes
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(2, QHeaderView.Stretch)  # Items column stretches
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)  # Make all columns resizable
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)  # Items column stretches
         
-        # Fixed widths for other columns
-        fixed_widths = {
-            0: 100,  # Date
-            1: 100,  # Order ID
-            3: 100,  # Sale Amount
-            4: 100,  # Shipping Fee
-            5: 100,  # Sales Tax
-            6: 100,  # Ship Trans Fee
-            7: 100,  # Item Trans Fee
-            8: 100,  # Processing Fee
-            9: 100,  # Listing Fee
-            10: 100  # Net
-        }
-        
-        for col, width in fixed_widths.items():
-            self.table.setColumnWidth(col, width)
-            header.setSectionResizeMode(col, QHeaderView.Fixed)
+        # Set initial column widths
+        self.table.setColumnWidth(0, 100)  # Date
+        self.table.setColumnWidth(1, 100)  # Order ID
+        self.table.setColumnWidth(3, 100)  # Sale Amount
+        self.table.setColumnWidth(4, 100)  # Shipping Fee
+        self.table.setColumnWidth(5, 100)  # Sales Tax
+        self.table.setColumnWidth(6, 100)  # Ship Trans Fee
+        self.table.setColumnWidth(7, 100)  # Item Trans Fee
+        self.table.setColumnWidth(8, 100)  # Processing Fee
+        self.table.setColumnWidth(9, 100)  # Listing Fee
+        self.table.setColumnWidth(10, 100)  # Net
         
         # Enable context menu
         self.table.setContextMenuPolicy(Qt.CustomContextMenu)
