@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
                               QGridLayout, QSizePolicy, QPushButton, QComboBox, 
-                              QTableWidget, QTableWidgetItem, QHeaderView)
+                              QTableWidget, QTableWidgetItem, QHeaderView, QScrollArea)
 from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtGui import QFont, QColor
 import pandas as pd
@@ -24,13 +24,14 @@ class StatCard(QFrame):
         
         layout = QVBoxLayout()
         layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(8)
+        layout.setSpacing(4)  # Reduced spacing between title and value
         
         title_label = QLabel(title)
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title_font = QFont()
         title_font.setPointSize(10)
         title_label.setFont(title_font)
+        title_label.setWordWrap(True)
         
         value_label = QLabel(value)
         value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -39,11 +40,22 @@ class StatCard(QFrame):
         value_font.setBold(True)
         value_label.setFont(value_font)
         
+        # Add stretches for vertical centering
+        layout.addStretch()
         layout.addWidget(title_label)
         layout.addWidget(value_label)
+        layout.addStretch()
+        
         self.setLayout(layout)
         self.value_label = value_label
         self.title_label = title_label
+        
+        # Set fixed height and minimum width
+        self.setFixedHeight(100)
+        self.setMinimumWidth(120)
+        
+        # Set minimum size for the card
+        # self.setMinimumSize(120, 100)
         
         # Connect theme change signal if theme manager exists
         if self.theme_manager:
@@ -51,20 +63,20 @@ class StatCard(QFrame):
     
     def update_style(self):
         theme = self.theme_manager.get_theme() if self.theme_manager else {}
-        bg_color = theme.get('background', '#ffffff')
-        border_color = theme.get('border', '#e0e0e0')
+        bg_color = "#2d2d2d" if self.theme_manager and self.theme_manager.is_dark_mode() else "#f5f5f5"
+        text_color = "#ffffff" if self.theme_manager and self.theme_manager.is_dark_mode() else "#000000"
         
         self.setStyleSheet(f"""
             StatCard {{
                 background-color: {bg_color};
-                border: 1px solid {border_color};
-                border-radius: 10px;
-                padding: 8px;
+                border-radius: 5px;
+                padding: 10px;
                 margin: 5px;
             }}
             QLabel {{
                 background-color: transparent;
                 border: none;
+                color: {text_color};
             }}
         """)
     
@@ -77,13 +89,17 @@ class ChartWidget(QFrame):
     def __init__(self, theme_manager, parent=None):
         super().__init__(parent)
         self.theme_manager = theme_manager
-        self.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
+        self.setFrameStyle(QFrame.NoFrame)  # Remove frame
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setMinimumHeight(450)
+        self.setMinimumWidth(400)
         
         layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
         
         self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
+        self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addWidget(self.canvas)
         
         self.setLayout(layout)
@@ -99,36 +115,44 @@ class ChartWidget(QFrame):
         self.update_chart_theme()
     
     def on_theme_changed(self, is_dark):
-        if self.current_data:
-            self.plot_data(
-                self.current_data,
-                self.current_chart_type,
-                self.current_title,
-                self.current_series_names
-            )
-    
+        self.update_chart_theme()
+        # Remove background color setting
+        self.update_chart_theme()
+        
     def update_chart_theme(self):
-        is_dark = self.theme_manager.is_dark_mode() if self.theme_manager else False
-        theme = self.theme_manager.get_theme() if self.theme_manager else {}
-        
-        self.figure.patch.set_facecolor(theme.get('background', '#ffffff'))
-        
-        for ax in self.figure.get_axes():
-            ax.set_facecolor(theme.get('background', '#ffffff'))
+        if not self.theme_manager:
+            return
             
-            text_color = theme.get('text', '#000000')
+        theme = self.theme_manager.get_theme()
+        bg_color = theme.get('background', '#f5f5f5')
+        text_color = theme.get('text', '#000000')
+        border_color = theme.get('border', '#cccccc')
+        
+        # Set figure background
+        self.figure.patch.set_facecolor(bg_color)
+        
+        for ax in self.figure.axes:
+            # Set axis background
+            ax.set_facecolor(bg_color)
+            
+            # Set text colors
             ax.tick_params(colors=text_color)
             ax.xaxis.label.set_color(text_color)
             ax.yaxis.label.set_color(text_color)
-            if ax.title:
+            if ax.get_title():
                 ax.title.set_color(text_color)
             
-            ax.grid(True, linestyle='--', alpha=0.2, color=theme.get('border', '#cccccc'))
-            
+            # Set spine colors
             for spine in ax.spines.values():
-                spine.set_color(theme.get('border', '#cccccc'))
+                spine.set_color(border_color)
         
         self.canvas.draw()
+    
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self.current_data is not None:
+            self.plot_data(self.current_data, self.current_chart_type, 
+                          self.current_title, self.current_series_names)
     
     def plot_data(self, data, chart_type='line', title='', series_names=None):
         self.current_data = data
@@ -137,10 +161,28 @@ class ChartWidget(QFrame):
         self.current_series_names = series_names
         
         self.figure.clear()
+        
+        # Calculate margins based on widget size
+        height = self.height() / self.figure.dpi
+        bottom_margin = min(0.35, max(0.3, 60/height))   # Increased bottom margin
+        top_margin = min(0.15, max(0.1, 30/height))      # Keep same top margin
+        
+        self.figure.subplots_adjust(
+            bottom=bottom_margin,
+            top=1.0 - top_margin,
+            left=0.12,
+            right=0.95
+        )
+        
         ax = self.figure.add_subplot(111)
         
         theme = self.theme_manager.get_theme() if self.theme_manager else {}
         primary_color = theme.get('primary', '#1a73e8')
+        bg_color = theme.get('background', '#f5f5f5')
+        
+        # Set background colors
+        self.figure.patch.set_facecolor(bg_color)
+        ax.set_facecolor(bg_color)
         
         ax.set_xlabel('Date')
         ax.set_ylabel('Amount ($)')
@@ -150,7 +192,6 @@ class ChartWidget(QFrame):
             'values' not in data or 
             len(data['labels']) == 0 or 
             len(data['values']) == 0):
-            self.figure.subplots_adjust(bottom=0.2)
             if title:
                 ax.set_title(title)
             self.update_chart_theme()
@@ -169,12 +210,10 @@ class ChartWidget(QFrame):
                 ax.xaxis.set_major_locator(mdates.AutoDateLocator())
             
             plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
-            self.figure.subplots_adjust(bottom=0.2)
             
         elif chart_type == 'bar':
             ax.bar(data['labels'], data['values'], color=primary_color)
             plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
-            self.figure.subplots_adjust(bottom=0.2)
             
         elif chart_type == 'pie':
             non_zero_values = []
@@ -208,7 +247,6 @@ class ChartWidget(QFrame):
                 ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
                 ax.xaxis.set_major_locator(mdates.AutoDateLocator())
             plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
-            self.figure.subplots_adjust(bottom=0.2)
         
         if title:
             ax.set_title(title)
@@ -231,8 +269,10 @@ class DashboardWidget(QWidget):
         QTimer.singleShot(0, self.refresh_dashboard)
         
     def init_ui(self):
-        layout = QVBoxLayout()
+        main_layout = QVBoxLayout()
+        main_layout.setSpacing(10)  # Reduced overall spacing
         
+        # Add filter section at the top (outside scroll area)
         filter_layout = QHBoxLayout()
         
         self.year_filter = QComboBox()
@@ -255,7 +295,7 @@ class DashboardWidget(QWidget):
         filter_layout.addWidget(self.refresh_btn)
         
         filter_layout.addStretch()
-        layout.addLayout(filter_layout)
+        main_layout.addLayout(filter_layout)
         
         title = QLabel("Dashboard")
         title_font = QFont()
@@ -263,35 +303,94 @@ class DashboardWidget(QWidget):
         title_font.setBold(True)
         title.setFont(title_font)
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title)
+        main_layout.addWidget(title)
         
-        stats_grid = QGridLayout()
+        # Create scroll area
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QFrame.NoFrame)  # Remove border
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         
+        # Style the scrollbar
+        scroll_area.setStyleSheet("""
+            QScrollBar:vertical {
+                border: none;
+                background: transparent;
+                width: 8px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background: #888888;
+                border-radius: 4px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: #666666;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                background: none;
+            }
+        """)
+        
+        # Create container widget for scroll area
+        scroll_widget = QWidget()
+        scroll_layout = QVBoxLayout(scroll_widget)
+        scroll_layout.setSpacing(10)  # Reduced spacing
+        scroll_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
+        
+        # Stats container
+        stats_container = QVBoxLayout()
+        stats_container.setSpacing(10)  # Reduced spacing between rows
+        
+        # First row of stats
+        row1_layout = QHBoxLayout()
+        row1_layout.setSpacing(10)  # Keep spacing between cards
         self.total_sales_card = StatCard("Total Sales (30 Days)", "$0.00", self)
         self.total_orders_card = StatCard("Total Orders (30 Days)", "0", self)
         self.avg_order_value_card = StatCard("Average Order Value", "$0.00", self)
+        row1_layout.addWidget(self.total_sales_card)
+        row1_layout.addWidget(self.total_orders_card)
+        row1_layout.addWidget(self.avg_order_value_card)
+        stats_container.addLayout(row1_layout)
+        
+        # Second row of stats
+        row2_layout = QHBoxLayout()
+        row2_layout.setSpacing(10)
         self.total_shipping_card = StatCard("Total Shipping (30 Days)", "$0.00", self)
         self.total_tax_card = StatCard("Total Tax (30 Days)", "$0.00", self)
         self.total_fees_card = StatCard("Total Fees (30 Days)", "$0.00", self)
+        row2_layout.addWidget(self.total_shipping_card)
+        row2_layout.addWidget(self.total_tax_card)
+        row2_layout.addWidget(self.total_fees_card)
+        stats_container.addLayout(row2_layout)
+        
+        # Third row of stats
+        row3_layout = QHBoxLayout()
+        row3_layout.setSpacing(10)
         self.total_listing_fees_card = StatCard("Total Listing Fees (30 Days)", "$0.00", self)
         self.net_income_card = StatCard("Net Income (30 Days)", "$0.00", self)
         self.profit_margin_card = StatCard("Profit Margin", "0%", self)
+        row3_layout.addWidget(self.total_listing_fees_card)
+        row3_layout.addWidget(self.net_income_card)
+        row3_layout.addWidget(self.profit_margin_card)
+        stats_container.addLayout(row3_layout)
+        
+        # Fourth row - single card
+        row4_layout = QHBoxLayout()
+        row4_layout.setSpacing(10)
         self.total_profit_card = StatCard("Total Profit After Expenses", "$0.00", self)
+        row4_layout.addWidget(self.total_profit_card)
+        stats_container.addLayout(row4_layout)
         
-        stats_grid.addWidget(self.total_sales_card, 0, 0)
-        stats_grid.addWidget(self.total_orders_card, 0, 1)
-        stats_grid.addWidget(self.avg_order_value_card, 0, 2)
-        stats_grid.addWidget(self.total_shipping_card, 1, 0)
-        stats_grid.addWidget(self.total_tax_card, 1, 1)
-        stats_grid.addWidget(self.total_fees_card, 1, 2)
-        stats_grid.addWidget(self.total_listing_fees_card, 2, 0)
-        stats_grid.addWidget(self.net_income_card, 2, 1)
-        stats_grid.addWidget(self.profit_margin_card, 2, 2)
-        stats_grid.addWidget(self.total_profit_card, 3, 0, 1, 3)  
-
-        layout.addLayout(stats_grid)
+        scroll_layout.addLayout(stats_container)
         
+        # Charts section
         charts_grid = QGridLayout()
+        charts_grid.setSpacing(20)
         
         self.sales_chart = ChartWidget(self.theme_manager)
         self.expenses_chart = ChartWidget(self.theme_manager)
@@ -299,9 +398,13 @@ class DashboardWidget(QWidget):
         charts_grid.addWidget(self.sales_chart, 0, 0)
         charts_grid.addWidget(self.expenses_chart, 0, 1)
         
-        layout.addLayout(charts_grid)
+        scroll_layout.addLayout(charts_grid)
         
-        self.setLayout(layout)
+        # Set the scroll widget and add to main layout
+        scroll_area.setWidget(scroll_widget)
+        main_layout.addWidget(scroll_area)
+        
+        self.setLayout(main_layout)
         
     def get_filtered_data(self):
         try:
