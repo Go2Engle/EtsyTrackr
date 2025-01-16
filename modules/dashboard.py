@@ -128,6 +128,23 @@ class ChartWidget(QFrame):
         theme = self.theme_manager.get_theme() if self.theme_manager else {}
         primary_color = theme.get('primary', '#1a73e8')
         
+        # Set default axis labels
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Amount ($)')
+        
+        # Check for empty data properly
+        if (not isinstance(data, dict) or 
+            'labels' not in data or 
+            'values' not in data or 
+            len(data['labels']) == 0 or 
+            len(data['values']) == 0):
+            # No data to plot, just set up empty chart with labels
+            self.figure.subplots_adjust(bottom=0.2)
+            if title:
+                ax.set_title(title)
+            self.update_chart_theme()
+            return
+        
         if chart_type == 'line':
             if isinstance(data['labels'][0], str):
                 dates = [mdates.datestr2num(d) for d in data['labels']]
@@ -136,10 +153,6 @@ class ChartWidget(QFrame):
             
             # Plot line with theme color
             ax.plot(dates, data['values'], marker='o', color=primary_color)
-            
-            # Format x-axis
-            ax.set_xlabel('Date')
-            ax.set_ylabel('Amount ($)')
             
             if isinstance(data['labels'][0], str):
                 ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
@@ -170,18 +183,23 @@ class ChartWidget(QFrame):
                 ax.pie(non_zero_values, labels=non_zero_labels, autopct='%1.1f%%', colors=colors)
         
         elif chart_type == 'stacked_bar':
+            if len(data.get('values', [])) == 0:
+                return
+                
             bottom = np.zeros(len(data['labels']))
-            if len(data['values']) > 0:
-                for i, values in enumerate(data['values']):
-                    if len(values) > 0:  # Only plot if we have data
-                        # Create color variations for each series
-                        color = f"#{int(primary_color[1:], 16) + i*0x222222:06x}"
-                        ax.bar(data['labels'], values, bottom=bottom,
-                              label=series_names[i] if series_names else f'Series {i}',
-                              color=color)
-                        bottom += values
+            for i, values in enumerate(data['values']):
+                if isinstance(values, (list, np.ndarray)) and len(values) > 0:  # Only plot if we have data
+                    # Create color variations for each series
+                    color = f"#{int(primary_color[1:], 16) + i*0x222222:06x}"
+                    ax.bar(data['labels'], values, bottom=bottom,
+                          label=series_names[i] if series_names else f'Series {i}',
+                          color=color)
+                    bottom += values
             
             ax.legend()
+            if isinstance(data['labels'][0], str):
+                ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+                ax.xaxis.set_major_locator(mdates.AutoDateLocator())
             plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
             self.figure.subplots_adjust(bottom=0.2)
         
@@ -224,9 +242,9 @@ class DashboardWidget(QWidget):
         
         # Month filter
         self.month_filter = QComboBox()
-        self.month_filter.addItems(list(calendar.month_name)[1:])  # Skip empty first item
+        self.month_filter.addItems(['All Months'] + list(calendar.month_name)[1:])  # Add 'All Months' option and skip empty first item
         current_month = datetime.now().month
-        self.month_filter.setCurrentIndex(current_month - 1)  # Zero-based index
+        self.month_filter.setCurrentIndex(current_month)  # Set to current month (index is now offset by 1 due to 'All Months')
         self.month_filter.currentTextChanged.connect(self.refresh_dashboard)
         filter_layout.addWidget(QLabel("Month:"))
         filter_layout.addWidget(self.month_filter)
@@ -380,22 +398,43 @@ class DashboardWidget(QWidget):
                 end_date = datetime(year, month + 1, 1) - timedelta(days=1)
             return start_date, end_date
         
-        # Handle full year
-        return datetime(year, 1, 1), datetime(year, 12, 31)
+        # Handle full year when 'All Months' is selected
+        start_date = datetime(year, 1, 1)
+        end_date = datetime(year, 12, 31)
+        return start_date, end_date
+
+    def reset_metrics(self):
+        """Reset all metrics to zero"""
+        self.total_sales_card.update_value("$0.00")
+        self.total_orders_card.update_value("0")
+        self.avg_order_value_card.update_value("$0.00")
+        self.total_shipping_card.update_value("$0.00")
+        self.total_tax_card.update_value("$0.00")
+        self.total_fees_card.update_value("$0.00")
+        self.total_listing_fees_card.update_value("$0.00")
+        self.net_income_card.update_value("$0.00")
+        self.profit_margin_card.update_value("0%")
+        self.total_profit_card.update_value("$0.00")
+        
+        # Reset charts with empty data but proper structure
+        empty_data = {'labels': [], 'values': []}
+        self.sales_chart.plot_data(empty_data, title='Sales Over Time')
+        self.expenses_chart.plot_data(empty_data, title='Expenses Over Time')
 
     def refresh_dashboard(self):
         """Refresh all dashboard widgets"""
         try:
             df = self.get_filtered_data()
             if df is None or df.empty:
+                self.reset_metrics()
                 return
             
             self.update_metrics(df)
             self.update_charts(df)
             
         except Exception:
-            pass
-            
+            self.reset_metrics()
+
     def update_metrics(self, df):
         """Update dashboard metrics with new data"""
         try:
