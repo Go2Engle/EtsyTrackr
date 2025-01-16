@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                            QPushButton, QTableWidget, QTableWidgetItem,
-                           QHeaderView, QComboBox, QFileDialog, QMessageBox, QCheckBox, QMenu, QApplication)
+                           QHeaderView, QComboBox, QFileDialog, QMessageBox, QCheckBox, QMenu, QApplication, QFrame, QGridLayout, QSizePolicy)
 from PySide6.QtCore import Qt, QDate, QUrl, QTimer, Signal
 from PySide6.QtGui import QDesktopServices, QBrush, QColor, QIcon
 import pandas as pd
@@ -13,11 +13,18 @@ import calendar
 class SalesWidget(QWidget):
     data_changed = Signal()  # Add signal for data changes
     
-    def __init__(self, db):
+    def __init__(self, db, theme_manager=None):
         super().__init__()
         self.db = db
+        self.theme_manager = theme_manager
         self.app_icon = QIcon(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'icon.png'))
         self.init_ui()
+        
+        # Connect to theme system if theme manager exists
+        if self.theme_manager:
+            self.theme_manager.theme_changed.connect(self.on_theme_changed)
+            # Initialize with current theme
+            self.on_theme_changed(self.theme_manager.is_dark_mode())
         
         # Create a timer for auto-refresh (every 5 minutes)
         self.refresh_timer = QTimer()
@@ -32,21 +39,85 @@ class SalesWidget(QWidget):
         
         # Left side - Statement controls
         left_controls = QVBoxLayout()
+        left_controls.setSpacing(5)
+        left_controls.setContentsMargins(0, 0, 0, 0)
         
         etsy_link = QPushButton("Go to Etsy Monthly Statement")
         etsy_link.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://www.etsy.com/your/account/payments/monthly-statement")))
+        left_controls.addWidget(etsy_link)
         
         instructions = QLabel("1. Click the link above to go to Etsy\n2. Choose month and year\n3. Generate and download the CSV\n4. Import it below")
-        instructions.setStyleSheet("color: #666; margin: 10px;")
-        
-        left_controls.addWidget(etsy_link)
+        instructions.setStyleSheet("color: #666;")
         left_controls.addWidget(instructions)
         
         controls_layout.addLayout(left_controls)
-        controls_layout.addStretch()
+        
+        # Center - Stats Frame
+        center_layout = QVBoxLayout()
+        center_layout.setSpacing(0)
+        center_layout.setContentsMargins(10, 0, 10, 0)
+        
+        # Create a frame for the sales stats
+        self.stats_frame = QFrame()
+        self.stats_frame.setStyleSheet("""
+            QFrame {
+                background-color: #f5f5f5;
+                border-radius: 5px;
+                padding: 10px;
+                margin: 0px;
+            }
+        """)
+        stats_layout = QGridLayout()
+        stats_layout.setSpacing(5)
+        stats_layout.setContentsMargins(5, 5, 5, 5)
+        
+        # Create and add labels
+        self.sales_label = QLabel("<b>Sales</b><br>$0.00")
+        self.shipping_label = QLabel("<b>Shipping</b><br>$0.00")
+        self.trans_fees_label = QLabel("<b>Transaction Fees</b><br>$0.00")
+        self.listing_fees_label = QLabel("<b>Listing Fees</b><br>$0.00")
+        self.processing_fees_label = QLabel("<b>Processing Fees</b><br>$0.00")
+        self.tax_label = QLabel("<b>Tax</b><br>$0.00")
+        self.refunds_label = QLabel("<b>Refunds</b><br>$0.00")
+        self.net_profit_label = QLabel("<b>Net Profit</b><br>$0.00")
+        
+        # Set alignment and style for all labels
+        label_style = """
+            QLabel {
+                padding: 2px;
+                font-size: 9pt;
+                min-width: 100px;
+            }
+        """
+        
+        for label in [self.sales_label, self.shipping_label, self.trans_fees_label,
+                     self.listing_fees_label, self.processing_fees_label, self.tax_label,
+                     self.refunds_label, self.net_profit_label]:
+            label.setAlignment(Qt.AlignCenter)
+            label.setTextFormat(Qt.RichText)
+            label.setStyleSheet(label_style)
+            label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        
+        # Make Net Profit label stand out but keep same base size
+        self.net_profit_label.setStyleSheet(label_style + "QLabel { font-weight: bold; }")
+        
+        stats_layout.addWidget(self.sales_label, 0, 0)
+        stats_layout.addWidget(self.shipping_label, 0, 1)
+        stats_layout.addWidget(self.trans_fees_label, 0, 2)
+        stats_layout.addWidget(self.listing_fees_label, 1, 0)
+        stats_layout.addWidget(self.processing_fees_label, 1, 1)
+        stats_layout.addWidget(self.tax_label, 1, 2)
+        stats_layout.addWidget(self.refunds_label, 2, 0)
+        stats_layout.addWidget(self.net_profit_label, 2, 1)  # Remove span, place in center column
+        
+        self.stats_frame.setLayout(stats_layout)
+        center_layout.addWidget(self.stats_frame)
+        controls_layout.addLayout(center_layout)
         
         # Right side - Import and Clear controls
         right_controls = QHBoxLayout()
+        right_controls.setSpacing(5)
+        right_controls.setContentsMargins(0, 0, 0, 0)
         
         import_btn = QPushButton("Import Statement")
         import_btn.clicked.connect(self.import_statement)
@@ -69,8 +140,9 @@ class SalesWidget(QWidget):
         filter_layout = QHBoxLayout()
         
         self.date_filter = QComboBox()
-        self.date_filter.addItems(['All Time', 'This Year', 'Last 30 Days', 'This Month', 'Last Month'])
+        self.date_filter.addItems(['This Month', 'This Year', 'Last 30 Days', 'Last Month', 'All Time'])  # Reordered to put This Month first
         self.date_filter.currentTextChanged.connect(self.refresh_table)
+        self.date_filter.setCurrentText("This Month")
         
         self.year_filter = QComboBox()
         self.year_filter.addItems(['All Years'] + [str(year) for year in range(2024, 2030)])
@@ -132,8 +204,8 @@ class SalesWidget(QWidget):
         layout.addWidget(self.table)
         
         # Status label at the bottom
-        self.status_label = QLabel()
-        layout.addWidget(self.status_label)
+        # self.status_label = QLabel()
+        # layout.addWidget(self.status_label)
         
         self.setLayout(layout)
         
@@ -261,7 +333,7 @@ class SalesWidget(QWidget):
             df = self.get_filtered_data()
             if df is None or df.empty:
                 self.table.setRowCount(0)
-                self.status_label.setText("No data available")
+                # self.status_label.setText("No data available")
                 return
             
             # Update table
@@ -361,26 +433,67 @@ class SalesWidget(QWidget):
                            total_tax +
                            total_refunds)  # Refunds are now properly negative
             
-            # Create status text with all totals
-            status_parts = [
-                f"Sales: ${total_sales:,.2f}",
-                f"Shipping: ${total_shipping:,.2f}",
-                f"Transaction Fees: ${total_transaction_fees:,.2f}",
-                f"Listing Fees: ${total_listing_fees:,.2f}",
-                f"Processing Fees: ${total_processing_fees:,.2f}",
-                f"Tax: ${total_tax:,.2f}",
-                f"Refunds: ${total_refunds:,.2f}",  # Already negative
-                f"Net Profit: ${net_profit:,.2f}"
-            ]
-            
-            # Join with dividers and set status
-            self.status_label.setText(" | ".join(status_parts))
+            # Update the sales stats labels
+            self.sales_label.setText(f"<b>Sales</b><br>${total_sales:,.2f}")
+            self.shipping_label.setText(f"<b>Shipping</b><br>${total_shipping:,.2f}")
+            self.trans_fees_label.setText(f"<b>Transaction Fees</b><br>${total_transaction_fees:,.2f}")
+            self.listing_fees_label.setText(f"<b>Listing Fees</b><br>${total_listing_fees:,.2f}")
+            self.processing_fees_label.setText(f"<b>Processing Fees</b><br>${total_processing_fees:,.2f}")
+            self.tax_label.setText(f"<b>Tax</b><br>${total_tax:,.2f}")
+            self.refunds_label.setText(f"<b>Refunds</b><br>${total_refunds:,.2f}")
+            self.net_profit_label.setText(f"<b>Net Profit</b><br>${net_profit:,.2f}")
             
             # Emit signal after data is refreshed
             self.data_changed.emit()
             
         except Exception as e:
             QMessageBox.critical(self, 'Error', f'Error refreshing table: {str(e)}')
+    
+    def on_theme_changed(self, is_dark):
+        # Update stats frame based on theme
+        bg_color = "#2d2d2d" if is_dark else "#f5f5f5"
+        text_color = "#ffffff" if is_dark else "#000000"
+        border_color = "#3d3d3d" if is_dark else "#e5e5e5"
+        
+        self.stats_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {bg_color};
+                border: 1px solid {border_color};
+                border-radius: 5px;
+                padding: 10px;
+                margin: 0px;
+            }}
+            QLabel {{
+                border: none;
+                background: transparent;
+            }}
+        """)
+        
+        label_style = f"""
+            QLabel {{
+                padding: 2px;
+                font-size: 9pt;
+                min-width: 100px;
+                color: {text_color};
+                border: none;
+                background: transparent;
+            }}
+        """
+        
+        # Update all labels with new style
+        for label in [self.sales_label, self.shipping_label, self.trans_fees_label,
+                     self.listing_fees_label, self.processing_fees_label, self.tax_label,
+                     self.refunds_label]:
+            label.setStyleSheet(label_style)
+        
+        # Make Net Profit label stand out but keep same base size
+        self.net_profit_label.setStyleSheet(label_style + "QLabel { font-weight: bold; }")
+        
+        # Update instructions text color
+        instructions_color = "#999999" if is_dark else "#666666"
+        for child in self.findChildren(QLabel):
+            if child.text().startswith("1. Click the link"):
+                child.setStyleSheet(f"color: {instructions_color};")
     
     def import_statement(self):
         try:
@@ -497,7 +610,7 @@ class SalesWidget(QWidget):
                 self.table.setRowCount(0)
                 
                 # Clear the status label
-                self.status_label.setText("")
+                # self.status_label.setText("")
                 
                 QMessageBox.information(
                     self,
