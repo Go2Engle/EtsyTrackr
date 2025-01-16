@@ -259,37 +259,111 @@ class ThemeManager(QObject):
             }}
             
             QScrollBar:vertical {{
-                background-color: {theme['surface']};
-                width: 12px;
-                margin: 0;
+                border: none;
+                background: transparent;
+                width: 8px;
+                margin: 0px;
             }}
             
             QScrollBar::handle:vertical {{
-                background-color: {theme['border']};
-                border-radius: 6px;
+                background: #888888;
+                border-radius: 4px;
                 min-height: 20px;
-                margin: 2px;
             }}
             
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
-                height: 0;
+            QScrollBar::handle:vertical:hover {{
+                background: #666666;
+            }}
+            
+            QScrollBar::add-line:vertical, 
+            QScrollBar::sub-line:vertical {{
+                height: 0px;
+            }}
+            
+            QScrollBar::add-page:vertical, 
+            QScrollBar::sub-page:vertical {{
+                background: none;
             }}
             
             QScrollBar:horizontal {{
-                background-color: {theme['surface']};
-                height: 12px;
-                margin: 0;
+                border: none;
+                background: transparent;
+                height: 8px;
+                margin: 0px;
             }}
             
             QScrollBar::handle:horizontal {{
-                background-color: {theme['border']};
-                border-radius: 6px;
+                background: #888888;
+                border-radius: 4px;
                 min-width: 20px;
-                margin: 2px;
             }}
             
-            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
-                width: 0;
+            QScrollBar::handle:horizontal:hover {{
+                background: #666666;
+            }}
+            
+            QScrollBar::add-line:horizontal, 
+            QScrollBar::sub-line:horizontal {{
+                width: 0px;
+            }}
+            
+            QScrollBar::add-page:horizontal, 
+            QScrollBar::sub-page:horizontal {{
+                background: none;
+            }}
+            
+            QTableWidget {{
+                gridline-color: {theme['border']};
+                border: none;
+                background-color: {theme['surface']};
+            }}
+            
+            QTableWidget::item {{
+                padding: 4px;
+            }}
+            
+            QHeaderView::section {{
+                background-color: {theme['surface']};
+                color: {theme['text']};
+                padding: 8px;
+                border: none;
+                border-bottom: 1px solid {theme['border']};
+            }}
+            
+            QTableWidget::item:selected {{
+                background-color: {theme['primary']};
+                color: #ffffff;
+            }}
+            
+            QTableWidget QPushButton {{
+                padding: 4px 8px;
+                min-height: 28px;
+                max-height: 28px;
+                margin: 0px;
+                font-size: 11px;
+                width: 60px;
+            }}
+            
+            QTableWidget QPushButton:hover {{
+                background-color: {theme['secondary']};
+            }}
+            
+            QLineEdit, QComboBox, QSpinBox {{
+                background-color: {theme['surface']};
+                color: {theme['text']};
+                border: 1px solid {theme['border']};
+                border-radius: 4px;
+                padding: 8px;
+            }}
+            
+            QLineEdit:focus, QComboBox:focus, QSpinBox:focus {{
+                border: 2px solid {theme['primary']};
+                padding: 7px;
+            }}
+            
+            QComboBox::drop-down {{
+                border: none;
+                padding-right: 8px;
             }}
             
             QDateEdit {{
