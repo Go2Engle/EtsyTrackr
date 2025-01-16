@@ -297,47 +297,62 @@ class SalesWidget(QWidget):
                     ('Shipping Transaction Fee', 6),
                     ('Item Transaction Fee', 7),
                     ('Processing Fee', 8),
-                    ('Listing Fee', 9),
-                    ('Net', 10)
+                    ('Listing Fee', 9)
                 ]
                 
+                # Calculate row net
+                row_net = float(row.get('Sale Amount', 0) or 0)
+                row_net += float(row.get('Shipping Fee', 0) or 0)
+                row_net += float(row.get('Sales Tax', 0) or 0)
+                row_net += float(row.get('Shipping Transaction Fee', 0) or 0)
+                row_net += float(row.get('Item Transaction Fee', 0) or 0)
+                row_net += float(row.get('Processing Fee', 0) or 0)
+                row_net += float(row.get('Listing Fee', 0) or 0)
+                
+                # Display financial columns
                 for col_name, col_idx in financial_cols:
                     amount = row.get(col_name, 0)
                     if pd.isna(amount):
                         amount = 0
-                    item = QTableWidgetItem(f"${float(amount):.2f}")
+                    amount = float(amount)
+                    
+                    item = QTableWidgetItem(f"${amount:.2f}")
                     item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                     
-                    # Color negative values in red
-                    if float(amount) < 0:
+                    if amount < 0:
                         item.setForeground(QBrush(QColor('red')))
                     
                     self.table.setItem(i, col_idx, item)
                     
+                    # Update running totals
                     if col_name == 'Sale Amount':
                         if '[REFUNDED]' in str(row['Items']):
                             item.setForeground(QBrush(QColor('red')))
-                            total_refunds -= float(amount)  # Negate the amount to make refunds negative
-                        if float(amount) > 0:  # Count all positive sales, even if refunded
-                            total_sales += float(amount)
+                            total_refunds -= amount
+                        if amount > 0:
+                            total_sales += amount
                     elif col_name == 'Shipping Fee':
-                        if 'Label #' in str(row['Order ID']):  # This is a shipping label entry
+                        if 'Label #' in str(row['Order ID']):
                             item.setForeground(QBrush(QColor('red')))
-                        total_shipping += float(amount)
+                        total_shipping += amount
                     elif col_name == 'Sales Tax':
-                        total_tax += float(amount)
+                        total_tax += amount
                     elif col_name == 'Shipping Transaction Fee' or col_name == 'Item Transaction Fee':
-                        total_transaction_fees += float(amount)
+                        total_transaction_fees += amount
                     elif col_name == 'Processing Fee':
-                        total_processing_fees += float(amount)
+                        total_processing_fees += amount
                     elif col_name == 'Listing Fee':
-                        total_listing_fees += float(amount)
-                    elif col_name == 'Net':
-                        if float(amount) < 0:
-                            item.setForeground(QBrush(QColor('red')))
+                        total_listing_fees += amount
                 
-                # Calculate net profit
-                net_profit = (total_sales + 
+                # Add Net column
+                net_item = QTableWidgetItem(f"${row_net:.2f}")
+                net_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if row_net < 0:
+                    net_item.setForeground(QBrush(QColor('red')))
+                self.table.setItem(i, 10, net_item)
+            
+            # Calculate net profit
+            net_profit = (total_sales + 
                            total_shipping +
                            total_transaction_fees + 
                            total_listing_fees + 
