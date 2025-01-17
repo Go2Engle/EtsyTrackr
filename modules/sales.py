@@ -538,6 +538,17 @@ class SalesWidget(QWidget):
                             dest_path = os.path.join(self.db.statements_dir, base_name)
                             shutil.copy2(file_path, dest_path)
                         
+                        # After all files are imported, then ask about cleanup
+                        if scan_downloads and statement_files_by_month:
+                            if QMessageBox.question(self, "Cleanup Downloads", "Remove imported files from Downloads?", 
+                                QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
+                                for file_path in statement_files_by_month.values():
+                                    try:
+                                        os.remove(file_path)
+                                    except Exception as e:
+                                        print(f"Failed to remove {file_path}: {str(e)}")
+
+                        # Refresh the table
                         self.refresh_table()
                         return
                     
