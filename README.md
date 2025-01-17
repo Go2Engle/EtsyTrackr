@@ -141,14 +141,6 @@ python build.py
 
 The executable will be created in the `dist` directory.
 
-### Automated Builds
-Executables are automatically built for Windows, macOS, and Linux when a new release is created on GitHub. These builds are attached to the release as assets and can be downloaded directly from the releases page.
-
-Supported Platforms:
-- Windows: `.exe` executable
-- macOS: `.dmg` disk image
-- Linux: `.AppImage` package
-
 ## Usage
 
 1. Run the application:
