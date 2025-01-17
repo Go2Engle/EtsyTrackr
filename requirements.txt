@@ -8,3 +8,5 @@ python-dotenv==1.0.0
 PyPDF2==3.0.1
 numpy==1.26.3
 pyinstaller==6.3.0
+requests==2.31.0
+packaging==23.2

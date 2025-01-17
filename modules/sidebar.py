@@ -1,9 +1,10 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QPushButton, 
                               QStackedWidget, QLabel, QFrame, QHBoxLayout)
-from PySide6.QtCore import Qt, Signal, QSize, QPropertyAnimation, QEasingCurve
+from PySide6.QtCore import Qt, Signal, QSize, QPropertyAnimation, QEasingCurve, QTimer
 from PySide6.QtGui import QIcon
 from qtawesome import icon
 import os
+from .version import VersionChecker
 
 class SidebarButton(QPushButton):
     def __init__(self, text, icon_name, dark_mode=False, parent=None):
@@ -53,6 +54,31 @@ class Sidebar(QFrame):
             theme_manager.theme_changed.connect(self.on_theme_changed)
         
         self.setup_ui()
+        
+        # Check for updates periodically (every 4 hours)
+        self.update_timer = QTimer(self)
+        self.update_timer.timeout.connect(self.check_for_updates)
+        self.update_timer.start(4 * 60 * 60 * 1000)  # 4 hours in milliseconds
+        
+        # Initial check
+        QTimer.singleShot(1000, self.check_for_updates)  # Check after 1 second
+    
+    def check_for_updates(self):
+        """Check for updates and show/hide upgrade button"""
+        update_available, latest_version = VersionChecker.check_for_updates()
+        if update_available:
+            # Remove any 'v' prefix since we'll add it in the text
+            version_number = latest_version.lstrip('v')
+            self.upgrade_btn.setText(f"Upgrade to v{version_number}")
+            self.upgrade_btn.show()
+            self.upgrade_spacer.show()
+        else:
+            self.upgrade_btn.hide()
+            self.upgrade_spacer.hide()
+    
+    def on_upgrade_clicked(self):
+        """Open the GitHub releases page"""
+        VersionChecker.open_releases_page()
     
     def on_theme_changed(self, is_dark):
         self._dark_mode = is_dark
@@ -60,6 +86,7 @@ class Sidebar(QFrame):
             btn.set_dark_mode(is_dark)
         icon_name = "fa5s.chevron-right" if not self.expanded else "fa5s.chevron-left"
         self.collapse_btn.setIcon(icon(icon_name, color='white' if is_dark else 'black'))
+        self.upgrade_btn.set_dark_mode(is_dark)
     
     def setup_ui(self):
         self.layout = QVBoxLayout(self)
@@ -107,8 +134,22 @@ class Sidebar(QFrame):
         for btn in self.buttons:
             btn.setText("")
         
-        # Add stretch to push collapse button to bottom
+        # Add stretch to push upgrade and collapse buttons to bottom
         self.layout.addStretch()
+        
+        # Upgrade notification button (hidden by default)
+        self.upgrade_btn = SidebarButton("Upgrade Available", "fa5s.arrow-circle-up", self._dark_mode)
+        self.upgrade_btn.clicked.connect(self.on_upgrade_clicked)
+        self.upgrade_btn.setFlat(True)  # Remove the button border
+        self.upgrade_btn.hide()
+        self.layout.addWidget(self.upgrade_btn)
+        
+        # Spacer between upgrade and collapse buttons (hidden by default)
+        self.upgrade_spacer = QWidget()
+        self.upgrade_spacer.setFixedHeight(8)
+        self.upgrade_spacer.setStyleSheet("background: transparent; border: none;")
+        self.upgrade_spacer.hide()
+        self.layout.addWidget(self.upgrade_spacer)
         
         # Collapse button
         self.collapse_btn = SidebarButton("", "fa5s.chevron-right", self._dark_mode)
