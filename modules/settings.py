@@ -4,6 +4,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon
 import os
 import shutil
+from .version import VersionChecker
 
 class SettingsWidget(QWidget):
     storage_location_changed = Signal(str)
@@ -68,8 +69,13 @@ class SettingsWidget(QWidget):
         
         layout.addWidget(storage_section)
         
-        # Add stretch at the end
-        layout.addStretch()
+        # Add a subtle version number at the bottom right
+        version_label = QLabel(f"v{VersionChecker.CURRENT_VERSION.lstrip('v')}")
+        version_label.setStyleSheet("color: gray;")
+        version_label.setAlignment(Qt.AlignRight)
+        layout.addStretch()  # This pushes the version to the bottom
+        layout.addWidget(version_label)
+        
         self.setLayout(layout)
     
     def create_section(self, title):
