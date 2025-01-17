@@ -23,13 +23,27 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Build executable
+      - name: Download Inno Setup
+        run: |
+          curl -L -o is.exe "https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe"
+          .\is.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
+
+      - name: Build executables
         run: python build.py
 
-      - name: Upload Release Asset
+      - name: Build Installer
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+
+      - name: Upload Single-File Release Asset
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/EtsyTrackr.exe
+          files: dist/onefile/EtsyTrackr.exe
+
+      - name: Upload Installer Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Output/EtsyTrackr_Setup.exe
 
   # build-macos:
   #   runs-on: macos-latest
