@@ -23,13 +23,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Build executable
+      - name: Build executables
         run: python build.py
 
-      - name: Upload Release Asset
+      - name: Create Installer
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+        with:
+          path: installer.iss
+
+      - name: Upload Single-File Release Asset
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/EtsyTrackr.exe
+          files: dist/onefile/EtsyTrackr.exe
+
+      - name: Upload Installer Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Output/EtsyTrackr_Setup.exe
 
   # build-macos:
   #   runs-on: macos-latest
