@@ -23,17 +23,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Download Inno Setup
-        run: |
-          curl -L -o is.exe "https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe"
-          .\is.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
-
       - name: Build executables
         run: python build.py
 
-      - name: Build Installer
-        run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+      - name: Create Installer
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+        with:
+          path: installer.iss
 
       - name: Upload Single-File Release Asset
         uses: softprops/action-gh-release@v2
