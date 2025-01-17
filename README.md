@@ -98,6 +98,25 @@ This project was created to provide Etsy sellers with a simple, offline way to t
 
 ## Installation
 
+### Windows Installer (Recommended)
+1. Download the latest installer (`EtsyTrackr_Setup.exe`) from the [Releases](https://github.com/Go2Engle/EtsyTrackr/releases) page
+2. Run the installer and follow the setup wizard
+3. Launch EtsyTrackr from your Start Menu or desktop shortcut
+
+The installer will:
+- Create a Start Menu shortcut
+- Add a desktop shortcut (optional)
+- Handle automatic updates
+- Install all required dependencies
+
+### Portable Version
+If you prefer not to use the installer, you can also download the portable version:
+1. Download `EtsyTrackr.exe` from the [Releases](https://github.com/Go2Engle/EtsyTrackr/releases) page
+2. Run the executable from any location
+3. Note: The portable version will still check for updates but won't install them automatically
+
+## Getting Started
+
 1. Ensure you have Python 3.8 or higher installed
 2. Clone this repository
 3. Install required packages:
