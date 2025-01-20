@@ -9,14 +9,26 @@ class VersionChecker:
 
     @classmethod
     def check_for_updates(cls):
-        """Check if there's a newer version available
+        """Check if there's a newer version available and verify installer exists
         Returns:
             tuple: (bool, str) - (update_available, latest_version)
         """
         try:
             response = requests.get(cls.GITHUB_API_URL, timeout=5)
             if response.status_code == 200:
-                latest_version = response.json()['tag_name']  # Already includes 'v' prefix
+                release_data = response.json()
+                latest_version = release_data['tag_name']  # Already includes 'v' prefix
+                
+                # Check for platform-specific installer in assets
+                installer_name = "EtsyTrackr_Setup.exe"  # Windows installer
+                installer_exists = any(
+                    asset['name'] == installer_name 
+                    for asset in release_data.get('assets', [])
+                )
+                
+                if not installer_exists:
+                    return False, cls.CURRENT_VERSION
+                
                 # Remove 'v' prefix for version comparison
                 current = version.parse(cls.CURRENT_VERSION.lstrip('v'))
                 latest = version.parse(latest_version.lstrip('v'))
