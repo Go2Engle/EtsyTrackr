@@ -124,7 +124,8 @@ class Sidebar(QFrame):
         self.add_nav_button("Dashboard", "fa5s.chart-line", 0)
         self.add_nav_button("Sales", "fa5s.shopping-cart", 1)
         self.add_nav_button("Expenses", "fa5s.receipt", 2)
-        self.add_nav_button("Settings", "fa5s.cog", 3)
+        self.add_nav_button("Inventory", "fa5s.boxes", 3)
+        self.add_nav_button("Settings", "fa5s.cog", 4)
         
         # Set first button as active
         if self.buttons:
@@ -205,7 +206,7 @@ class Sidebar(QFrame):
     def show_labels(self):
         self.title.show()
         for i, btn in enumerate(self.buttons):
-            labels = ["Dashboard", "Sales", "Expenses", "Settings"]
+            labels = ["Dashboard", "Sales", "Expenses", "Inventory", "Settings"]
             btn.setText(labels[i])
 
 class MainContent(QStackedWidget):

@@ -10,6 +10,8 @@ class Database:
         self.expenses_file = os.path.join(storage_path, 'expenses.json')
         self.statements_dir = os.path.join(storage_path, 'statements')
         self.receipts_dir = os.path.join(storage_path, 'receipts')
+        self.inventory_file = os.path.join(storage_path, 'inventory.json')
+        self.inventory_images_dir = os.path.join(storage_path, 'inventory_images')
         
         # Initialize storage files if they don't exist
         self._init_storage()
@@ -21,6 +23,10 @@ class Database:
         
         os.makedirs(self.statements_dir, exist_ok=True)
         os.makedirs(self.receipts_dir, exist_ok=True)
+        os.makedirs(self.inventory_images_dir, exist_ok=True)
+        if not os.path.exists(self.inventory_file):
+            with open(self.inventory_file, 'w') as f:
+                json.dump([], f)
     
     def add_expense(self, expense_data):
         """Add an expense to the database
@@ -328,14 +334,23 @@ class Database:
         # Create new directories
         new_statements_dir = os.path.join(new_path, 'statements')
         new_receipts_dir = os.path.join(new_path, 'receipts')
+        new_inventory_images_dir = os.path.join(new_path, 'inventory_images')
         os.makedirs(new_statements_dir, exist_ok=True)
         os.makedirs(new_receipts_dir, exist_ok=True)
+        os.makedirs(new_inventory_images_dir, exist_ok=True)
+        
+        # Move inventory file
+        new_inventory_file = os.path.join(new_path, 'inventory.json')
+        if os.path.exists(self.inventory_file):
+            shutil.move(self.inventory_file, new_inventory_file)
         
         # Update paths
         self.storage_path = new_path
         self.expenses_file = new_expenses_file
         self.statements_dir = new_statements_dir
         self.receipts_dir = new_receipts_dir
+        self.inventory_file = new_inventory_file
+        self.inventory_images_dir = new_inventory_images_dir
     
     def update_expense_receipt(self, expense_id, receipt_file):
         """Update the receipt file for an existing expense"""
@@ -404,3 +419,76 @@ class Database:
             
         except Exception as e:
             raise Exception(f"Failed to delete expense: {str(e)}")
+
+    def get_inventory(self):
+        """Get all inventory items"""
+        with open(self.inventory_file, 'r') as f:
+            return json.load(f)
+            
+    def add_inventory_item(self, item_data):
+        """Add an inventory item
+        item_data should be a dictionary with:
+        - name: string
+        - description: string
+        - count: int
+        - url: optional string
+        - image: optional string, path to image
+        """
+        items = self.get_inventory()
+        
+        # Generate new ID
+        max_id = max([item['id'] for item in items]) if items else 0
+        item_data['id'] = max_id + 1
+        
+        # Handle image if present
+        if 'image' in item_data and item_data['image']:
+            # Copy image to inventory_images directory
+            image_ext = os.path.splitext(item_data['image'])[1]
+            new_image_path = os.path.join(self.inventory_images_dir, f"{item_data['id']}{image_ext}")
+            shutil.copy2(item_data['image'], new_image_path)
+            item_data['image'] = new_image_path
+            
+        items.append(item_data)
+        
+        with open(self.inventory_file, 'w') as f:
+            json.dump(items, f)
+            
+    def update_inventory_item(self, item_data):
+        """Update an inventory item"""
+        items = self.get_inventory()
+        
+        for i, item in enumerate(items):
+            if item['id'] == item_data['id']:
+                # Handle image if present and different
+                if 'image' in item_data and item_data['image']:
+                    if item_data['image'] != item.get('image'):
+                        # Remove old image if it exists
+                        if item.get('image') and os.path.exists(item['image']):
+                            os.remove(item['image'])
+                        
+                        # Copy new image
+                        image_ext = os.path.splitext(item_data['image'])[1]
+                        new_image_path = os.path.join(self.inventory_images_dir, f"{item_data['id']}{image_ext}")
+                        shutil.copy2(item_data['image'], new_image_path)
+                        item_data['image'] = new_image_path
+                
+                items[i] = item_data
+                break
+                
+        with open(self.inventory_file, 'w') as f:
+            json.dump(items, f)
+            
+    def delete_inventory_item(self, item_id):
+        """Delete an inventory item and its image"""
+        items = self.get_inventory()
+        
+        for item in items:
+            if item['id'] == item_id:
+                # Remove image if it exists
+                if item.get('image') and os.path.exists(item['image']):
+                    os.remove(item['image'])
+                items.remove(item)
+                break
+                
+        with open(self.inventory_file, 'w') as f:
+            json.dump(items, f)
