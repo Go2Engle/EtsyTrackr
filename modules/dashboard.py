@@ -352,8 +352,8 @@ class DashboardWidget(QWidget):
         # First row of stats
         row1_layout = QHBoxLayout()
         row1_layout.setSpacing(10)  # Keep spacing between cards
-        self.total_sales_card = StatCard("Total Sales (30 Days)", "$0.00", self)
-        self.total_orders_card = StatCard("Total Orders (30 Days)", "0", self)
+        self.total_sales_card = StatCard("Total Sales", "$0.00", self)
+        self.total_orders_card = StatCard("Total Orders", "0", self)
         self.avg_order_value_card = StatCard("Average Order Value", "$0.00", self)
         row1_layout.addWidget(self.total_sales_card)
         row1_layout.addWidget(self.total_orders_card)
@@ -363,9 +363,9 @@ class DashboardWidget(QWidget):
         # Second row of stats
         row2_layout = QHBoxLayout()
         row2_layout.setSpacing(10)
-        self.total_shipping_card = StatCard("Total Shipping (30 Days)", "$0.00", self)
-        self.total_tax_card = StatCard("Total Tax (30 Days)", "$0.00", self)
-        self.total_fees_card = StatCard("Total Fees (30 Days)", "$0.00", self)
+        self.total_shipping_card = StatCard("Total Shipping", "$0.00", self)
+        self.total_tax_card = StatCard("Total Tax", "$0.00", self)
+        self.total_fees_card = StatCard("Total Fees", "$0.00", self)
         row2_layout.addWidget(self.total_shipping_card)
         row2_layout.addWidget(self.total_tax_card)
         row2_layout.addWidget(self.total_fees_card)
@@ -374,8 +374,8 @@ class DashboardWidget(QWidget):
         # Third row of stats
         row3_layout = QHBoxLayout()
         row3_layout.setSpacing(10)
-        self.total_listing_fees_card = StatCard("Total Listing Fees (30 Days)", "$0.00", self)
-        self.net_income_card = StatCard("Net Income (30 Days)", "$0.00", self)
+        self.total_listing_fees_card = StatCard("Total Listing Fees", "$0.00", self)
+        self.net_income_card = StatCard("Net Income", "$0.00", self)
         self.profit_margin_card = StatCard("Profit Margin", "0%", self)
         row3_layout.addWidget(self.total_listing_fees_card)
         row3_layout.addWidget(self.net_income_card)
