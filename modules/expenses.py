@@ -30,6 +30,7 @@ class ExpensesWidget(QWidget):
         self.year_filter = QComboBox()
         current_year = datetime.now().year
         self.year_filter.addItems(['All Years'] + [str(year) for year in range(current_year, current_year-5, -1)])
+        self.year_filter.setCurrentText(str(current_year))  # Set current year as default
         self.year_filter.currentTextChanged.connect(self.refresh_table)
         filter_layout.addWidget(year_label)
         filter_layout.addWidget(self.year_filter)
@@ -37,7 +38,9 @@ class ExpensesWidget(QWidget):
         # Month filter
         month_label = QLabel("Month:")
         self.month_filter = QComboBox()
+        current_month = datetime.now().month
         self.month_filter.addItems(['All Months'] + list(calendar.month_name)[1:])
+        self.month_filter.setCurrentText(calendar.month_name[current_month])  # Set current month as default
         self.month_filter.currentTextChanged.connect(self.refresh_table)
         filter_layout.addWidget(month_label)
         filter_layout.addWidget(self.month_filter)
