@@ -8,6 +8,7 @@ from modules.dashboard import DashboardWidget
 from modules.expenses import ExpensesWidget
 from modules.settings import SettingsWidget
 from modules.sales import SalesWidget
+from modules.inventory import InventoryWidget
 from modules.database import Database
 from modules.welcome import WelcomeDialog
 from modules.theme import ThemeManager
@@ -82,19 +83,23 @@ class MainWindow(QMainWindow):
         # Create main content area
         self.main_content = MainContent()
         
-        # Create and add dashboard
+        # Create and add dashboard (index 0)
         self.dashboard = DashboardWidget(self.db, self.theme_manager, None)
         self.main_content.add_widget(self.dashboard, "Dashboard")
         
-        # Create and add sales
+        # Create and add sales (index 1)
         self.sales = SalesWidget(self.db, self.theme_manager)
         self.main_content.add_widget(self.sales, "Sales")
         
-        # Create and add expenses
+        # Create and add expenses (index 2)
         self.expenses = ExpensesWidget(self.db)
         self.main_content.add_widget(self.expenses, "Expenses")
         
-        # Create and add settings
+        # Create and add inventory (index 3)
+        self.inventory = InventoryWidget(self.db)
+        self.main_content.add_widget(self.inventory, "Inventory")
+        
+        # Create and add settings (index 4)
         self.settings_widget = SettingsWidget(self.settings, self.db, self.theme_manager)
         self.main_content.add_widget(self.settings_widget, "Settings")
         
