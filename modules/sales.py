@@ -432,12 +432,12 @@ class SalesWidget(QWidget):
             
             # Update the sales stats labels
             self.sales_label.setText(f"<b>Sales</b><br>${total_sales:,.2f}")
-            self.shipping_label.setText(f"<b>Shipping</b><br>${total_shipping:,.2f}")
-            self.trans_fees_label.setText(f"<b>Transaction Fees</b><br>${total_transaction_fees:,.2f}")
-            self.listing_fees_label.setText(f"<b>Listing Fees</b><br>${total_listing_fees:,.2f}")
-            self.processing_fees_label.setText(f"<b>Processing Fees</b><br>${total_processing_fees:,.2f}")
-            self.tax_label.setText(f"<b>Tax</b><br>${total_tax:,.2f}")
-            self.refunds_label.setText(f"<b>Refunds</b><br>${total_refunds:,.2f}")
+            self.shipping_label.setText(f"<b>Shipping</b><br>${abs(total_shipping):,.2f}")
+            self.trans_fees_label.setText(f"<b>Transaction Fees</b><br>${abs(total_transaction_fees):,.2f}")
+            self.listing_fees_label.setText(f"<b>Listing Fees</b><br>${abs(total_listing_fees):,.2f}")
+            self.processing_fees_label.setText(f"<b>Processing Fees</b><br>${abs(total_processing_fees):,.2f}")
+            self.tax_label.setText(f"<b>Tax</b><br>${abs(total_tax):,.2f}")
+            self.refunds_label.setText(f"<b>Refunds</b><br>${abs(total_refunds):,.2f}")
             self.net_profit_label.setText(f"<b>Net Profit</b><br>${net_profit:,.2f}")
             
             # Emit signal after data is refreshed
