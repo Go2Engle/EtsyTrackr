@@ -79,6 +79,9 @@ This project was created to provide Etsy sellers with a simple, offline way to t
 - Filter by year and month
 - Track shipping fees, taxes, and Etsy fees
 
+### Inventory Management
+- Track inventory levels for all your products
+
 ### Expense Management
 - Track business expenses with descriptions and dates
 - Attach and view receipt images/PDFs
