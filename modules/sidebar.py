@@ -87,7 +87,24 @@ class Sidebar(QFrame):
         icon_name = "fa5s.chevron-right" if not self.expanded else "fa5s.chevron-left"
         self.collapse_btn.setIcon(icon(icon_name, color='white' if is_dark else 'black'))
         self.upgrade_btn.set_dark_mode(is_dark)
+        # Update both theme toggle buttons
+        self.theme_toggle.set_dark_mode(is_dark)
+        self.theme_toggle_expanded.set_dark_mode(is_dark)
+        self.theme_toggle.setIcon(icon("fa5s.sun" if is_dark else "fa5s.moon", 
+                                    color='white' if is_dark else 'black'))
+        self.theme_toggle_expanded.setIcon(icon("fa5s.sun" if is_dark else "fa5s.moon", 
+                                    color='white' if is_dark else 'black'))
     
+    def toggle_theme(self):
+        """Toggle between light and dark theme"""
+        if self.theme_manager:
+            self.theme_manager.toggle_theme()
+            # Update both theme toggle buttons
+            icon_name = "fa5s.sun" if self._dark_mode else "fa5s.moon"
+            color = 'white' if self._dark_mode else 'black'
+            self.theme_toggle.setIcon(icon(icon_name, color=color))
+            self.theme_toggle_expanded.setIcon(icon(icon_name, color=color))
+            
     def setup_ui(self):
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(8, 16, 8, 16)
@@ -121,11 +138,18 @@ class Sidebar(QFrame):
         
         # Navigation buttons
         self.buttons = []
-        self.add_nav_button("Dashboard", "fa5s.chart-line", 0)
-        self.add_nav_button("Sales", "fa5s.shopping-cart", 1)
-        self.add_nav_button("Expenses", "fa5s.receipt", 2)
-        self.add_nav_button("Inventory", "fa5s.boxes", 3)
-        self.add_nav_button("Settings", "fa5s.cog", 4)
+        self.button_labels = {
+            0: "Dashboard",
+            1: "Sales",
+            2: "Expenses",
+            3: "Inventory",
+            4: "Settings"
+        }
+        self.add_nav_button(self.button_labels[0], "fa5s.chart-line", 0)
+        self.add_nav_button(self.button_labels[1], "fa5s.shopping-cart", 1)
+        self.add_nav_button(self.button_labels[2], "fa5s.receipt", 2)
+        self.add_nav_button(self.button_labels[3], "fa5s.boxes", 3)
+        self.add_nav_button(self.button_labels[4], "fa5s.cog", 4)
         
         # Set first button as active
         if self.buttons:
@@ -152,11 +176,60 @@ class Sidebar(QFrame):
         self.upgrade_spacer.hide()
         self.layout.addWidget(self.upgrade_spacer)
         
+        # Bottom container for collapse and theme buttons
+        self.bottom_container = QWidget()
+        self.bottom_container.setObjectName("bottom_container")
+        self.bottom_container.setStyleSheet("background: transparent;")
+        bottom_layout = QVBoxLayout(self.bottom_container)
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
+        bottom_layout.setSpacing(8)
+        
+        # Create horizontal container for expanded state
+        self.expanded_container = QWidget()
+        self.expanded_container.setObjectName("expanded_container")
+        self.expanded_container.setStyleSheet("background: transparent;")
+        expanded_layout = QHBoxLayout(self.expanded_container)
+        expanded_layout.setContentsMargins(0, 0, 0, 0)
+        expanded_layout.setSpacing(8)
+        
+        # Theme toggle button for collapsed state
+        self.theme_toggle = SidebarButton("", "fa5s.sun" if self._dark_mode else "fa5s.moon", self._dark_mode)
+        self.theme_toggle.setCheckable(False)
+        self.theme_toggle.clicked.connect(self.toggle_theme)
+        self.theme_toggle.setToolTip("Toggle dark/light theme")
+        
+        # Theme toggle button for expanded state
+        self.theme_toggle_expanded = SidebarButton("", "fa5s.sun" if self._dark_mode else "fa5s.moon", self._dark_mode)
+        self.theme_toggle_expanded.setCheckable(False)
+        self.theme_toggle_expanded.clicked.connect(self.toggle_theme)
+        self.theme_toggle_expanded.setToolTip("Toggle dark/light theme")
+        
         # Collapse button
         self.collapse_btn = SidebarButton("", "fa5s.chevron-right", self._dark_mode)
         self.collapse_btn.setCheckable(False)
         self.collapse_btn.clicked.connect(self.toggle_sidebar)
-        self.layout.addWidget(self.collapse_btn)
+        
+        # Collapse button for expanded state
+        self.collapse_btn_expanded = SidebarButton("", "fa5s.chevron-right", self._dark_mode)
+        self.collapse_btn_expanded.setCheckable(False)
+        self.collapse_btn_expanded.clicked.connect(self.toggle_sidebar)
+        
+        # Add buttons to layouts
+        expanded_layout.addWidget(self.collapse_btn_expanded)
+        expanded_layout.addStretch()
+        expanded_layout.addWidget(self.theme_toggle_expanded)
+        
+        # Stack the buttons vertically for collapsed state
+        bottom_layout.addWidget(self.theme_toggle)
+        bottom_layout.addWidget(self.collapse_btn)
+        
+        # Add both containers to the main layout
+        self.layout.addWidget(self.expanded_container)
+        self.layout.addWidget(self.bottom_container)
+        
+        # Initially show collapsed layout
+        self.expanded_container.hide()
+        self.bottom_container.show()
         
         # Set initial width
         self.setFixedWidth(self.MINIMIZED_WIDTH)
@@ -188,26 +261,37 @@ class Sidebar(QFrame):
         self.animation.setEndValue(target_width)
         self.animation.setEasingCurve(QEasingCurve.InOutQuad)
         
-        # Update button states
+        # Update button states and layouts
         if self.expanded:
             self.title.hide()
             for btn in self.buttons:
                 btn.setText("")
             # Set chevron-right icon with correct color
-            self.collapse_btn.setIcon(icon("fa5s.chevron-right", color='white' if self._dark_mode else 'black'))
+            icon_color = 'white' if self._dark_mode else 'black'
+            self.collapse_btn.setIcon(icon("fa5s.chevron-right", color=icon_color))
+            self.collapse_btn_expanded.setIcon(icon("fa5s.chevron-right", color=icon_color))
+            # Switch to collapsed layout
+            self.expanded_container.hide()
+            self.bottom_container.show()
         else:
-            self.animation.finished.connect(lambda: self.show_labels())
             # Set chevron-left icon with correct color
-            self.collapse_btn.setIcon(icon("fa5s.chevron-left", color='white' if self._dark_mode else 'black'))
+            icon_color = 'white' if self._dark_mode else 'black'
+            self.collapse_btn.setIcon(icon("fa5s.chevron-left", color=icon_color))
+            self.collapse_btn_expanded.setIcon(icon("fa5s.chevron-left", color=icon_color))
+            # Switch to expanded layout
+            self.bottom_container.hide()
+            self.expanded_container.show()
+            # Show labels after animation completes
+            self.animation.finished.connect(self.show_labels)
         
-        self.animation.start()
         self.expanded = not self.expanded
+        self.animation.start()
     
     def show_labels(self):
+        """Show labels for buttons when sidebar is expanded"""
         self.title.show()
         for i, btn in enumerate(self.buttons):
-            labels = ["Dashboard", "Sales", "Expenses", "Inventory", "Settings"]
-            btn.setText(labels[i])
+            btn.setText(self.button_labels[i])
 
 class MainContent(QStackedWidget):
     def __init__(self, parent=None):
