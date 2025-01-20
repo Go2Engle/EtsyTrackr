@@ -139,25 +139,30 @@ class SalesWidget(QWidget):
         # Add date filter controls
         filter_layout = QHBoxLayout()
         
-        self.date_filter = QComboBox()
-        self.date_filter.addItems(['This Month', 'This Year', 'Last 30 Days', 'Last Month', 'All Time'])  # Reordered to put This Month first
-        self.date_filter.currentTextChanged.connect(self.refresh_table)
-        self.date_filter.setCurrentText("This Month")
-        
+        # Year filter
+        year_label = QLabel("Year:")
         self.year_filter = QComboBox()
-        self.year_filter.addItems(['All Years'] + [str(year) for year in range(2024, 2030)])
-        self.year_filter.currentTextChanged.connect(self.refresh_table)
-        
-        self.month_filter = QComboBox()
-        self.month_filter.addItems(['All Months'] + [calendar.month_name[i] for i in range(1, 13)])
-        self.month_filter.currentTextChanged.connect(self.refresh_table)
-        
-        filter_layout.addWidget(QLabel('View:'))
-        filter_layout.addWidget(self.date_filter)
+        current_year = datetime.now().year
+        years = self.db.get_years_from_sales()
+        if not years:  # If no data, just show current year
+            years = [current_year]
+        self.year_filter.addItems(['All Years'] + [str(year) for year in years])
+        self.year_filter.setCurrentText(str(current_year))
+        self.year_filter.currentTextChanged.connect(self.on_year_changed)
+        filter_layout.addWidget(year_label)
         filter_layout.addWidget(self.year_filter)
-        filter_layout.addWidget(self.month_filter)
-        filter_layout.addStretch()
         
+        # Month filter
+        month_label = QLabel("Month:")
+        self.month_filter = QComboBox()
+        current_month = datetime.now().month
+        self.month_filter.addItems(['All Months'] + list(calendar.month_name)[1:])
+        self.month_filter.setCurrentText(calendar.month_name[current_month])
+        self.month_filter.currentTextChanged.connect(self.refresh_table)
+        filter_layout.addWidget(month_label)
+        filter_layout.addWidget(self.month_filter)
+        
+        filter_layout.addStretch()
         layout.addLayout(filter_layout)
         
         # Sales table
@@ -228,57 +233,8 @@ class SalesWidget(QWidget):
         except:
             return 'Unknown'
     
-    def _date_in_filter(self, date):
-        """Check if date is within selected period"""
-        period_filter = self.period_combo.currentText()
-        
-        if period_filter == "All Time":
-            return True
-        elif period_filter == "This Month":
-            return date.year == datetime.now().year and date.month == datetime.now().month
-        elif period_filter == "Last Month":
-            last_month = datetime.now() - pd.DateOffset(months=1)
-            return date.year == last_month.year and date.month == last_month.month
-        elif period_filter == "This Year":
-            return date.year == datetime.now().year
-        elif period_filter == "Last Year":
-            return date.year == datetime.now().year - 1
-        
-        return False
-    
-    def get_date_filter(self):
-        """Get the date filter based on current selections"""
-        filter_type = self.date_filter.currentText()
-        selected_year = self.year_filter.currentText()
-        selected_month = self.month_filter.currentText()
-        
-        now = datetime.now()
-        
-        if filter_type == 'Last 30 Days':
-            return now - timedelta(days=30), now
-        elif filter_type == 'This Month':
-            return datetime(now.year, now.month, 1), now
-        elif filter_type == 'Last Month':
-            first_day = (now.replace(day=1) - timedelta(days=1)).replace(day=1)
-            last_day = now.replace(day=1) - timedelta(days=1)
-            return first_day, last_day
-        elif filter_type == 'This Year':
-            return datetime(now.year, 1, 1), now
-        elif selected_year != 'All Years':
-            year = int(selected_year)
-            if selected_month != 'All Months':
-                month = list(calendar.month_name).index(selected_month)
-                next_month = month + 1 if month < 12 else 1
-                next_year = year if month < 12 else year + 1
-                return datetime(year, month, 1), datetime(next_year, next_month, 1) - timedelta(days=1)
-            return datetime(year, 1, 1), datetime(year + 1, 1, 1) - timedelta(days=1)
-        
-        return None, None  # No date filter
-    
     def get_filtered_data(self):
         """Get the filtered data based on current selections"""
-        start_date, end_date = self.get_date_filter()
-        
         # Process each statement file
         data = []
         for filename in os.listdir(self.db.statements_dir):
@@ -294,16 +250,28 @@ class SalesWidget(QWidget):
                 if processed_df is None:
                     continue
                 
+                # Convert date column to datetime
+                processed_df['Date'] = pd.to_datetime(processed_df['Date'])
+                
+                # Apply year filter
+                selected_year = self.year_filter.currentText()
+                if selected_year != 'All Years':
+                    processed_df = processed_df[processed_df['Date'].dt.year == int(selected_year)]
+                
+                # Apply month filter
+                selected_month = self.month_filter.currentText()
+                if selected_month != 'All Months':
+                    month_num = list(calendar.month_name).index(selected_month)
+                    processed_df = processed_df[processed_df['Date'].dt.month == month_num]
+                
+                # Skip if no data after filtering
+                if processed_df.empty:
+                    continue
+                
+                # Convert each row to dict and add to data list
                 for _, row in processed_df.iterrows():
-                    sale_date = row['Date']
-                    
-                    # Apply date filter if set
-                    if start_date and end_date:
-                        if not (start_date <= sale_date <= end_date):
-                            continue
-                    
                     data.append({
-                        'Date': sale_date,
+                        'Date': row['Date'],
                         'Order ID': row['Order ID'],
                         'Items': row['Items'],
                         'Sale Amount': row['Sale Amount'],
@@ -317,10 +285,12 @@ class SalesWidget(QWidget):
                     })
             except Exception as e:
                 print(f"Error processing {filename}: {str(e)}")
+                continue
         
         if not data:
             return None
         
+        # Convert list of dicts to DataFrame
         return pd.DataFrame(data)
     
     def refresh_table(self):
@@ -445,6 +415,15 @@ class SalesWidget(QWidget):
             
         except Exception as e:
             QMessageBox.critical(self, 'Error', f'Error refreshing table: {str(e)}')
+    
+    def on_year_changed(self, selected_year):
+        """Handle year selection changes"""
+        if selected_year == 'All Years':
+            self.month_filter.setCurrentText('All Months')
+            self.month_filter.setEnabled(False)
+        else:
+            self.month_filter.setEnabled(True)
+        self.refresh_table()
     
     def on_theme_changed(self, is_dark):
         # Update stats frame based on theme

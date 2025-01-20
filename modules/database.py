@@ -492,3 +492,37 @@ class Database:
                 
         with open(self.inventory_file, 'w') as f:
             json.dump(items, f)
+
+    def get_years_from_expenses(self):
+        """Get all years present in the expenses data"""
+        years = set()
+        expenses = self.get_expenses()
+        for expense in expenses:
+            date = datetime.strptime(expense['date'], '%Y-%m-%d')
+            years.add(date.year)
+        return sorted(list(years), reverse=True)
+    
+    def get_years_from_sales(self):
+        """Get all years present in the sales data"""
+        years = set()
+        for filename in os.listdir(self.statements_dir):
+            if not filename.endswith('.csv'):
+                continue
+                
+            file_path = os.path.join(self.statements_dir, filename)
+            try:
+                df = pd.read_csv(file_path)
+                processed_df = self.process_statement_data(df)
+                if processed_df is not None:
+                    dates = pd.to_datetime(processed_df['Date'])
+                    years.update(dates.dt.year)
+            except Exception:
+                continue
+        return sorted(list(years), reverse=True)
+    
+    def get_all_years(self):
+        """Get all years present in both sales and expenses data"""
+        years = set()
+        years.update(self.get_years_from_sales())
+        years.update(self.get_years_from_expenses())
+        return sorted(list(years), reverse=True)
