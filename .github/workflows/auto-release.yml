@@ -1,0 +1,55 @@
+name: Auto Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'modules/version.py'  # Only trigger on version.py changes
+
+jobs:
+  create-release:
+    runs-on: windows-latest
+    permissions:
+      contents: write  # Needed for creating releases
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for generating release notes
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Extract version
+        id: get_version
+        run: |
+          $version = Select-String -Path "modules/version.py" -Pattern 'CURRENT_VERSION = "v([0-9]+\.[0-9]+\.[0-9]+)"' | ForEach-Object { $_.Matches.Groups[1].Value }
+          echo "VERSION=$version" >> $env:GITHUB_ENV
+        shell: pwsh
+      
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Check if tag exists
+          git fetch --tags
+          if (git tag -l "v$env:VERSION") {
+            echo "Tag v$env:VERSION already exists. Skipping release."
+            exit 0
+          }
+          
+          # Create and push tag
+          git tag "v$env:VERSION"
+          git push origin "v$env:VERSION"
+          
+          # Create GitHub release with auto-generated notes
+          gh release create "v$env:VERSION" `
+            --title "EtsyTrackr v$env:VERSION" `
+            --generate-notes `
+            --draft=false `
+            --prerelease=false
+        shell: pwsh
