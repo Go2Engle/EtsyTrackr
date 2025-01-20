@@ -29,9 +29,12 @@ class ExpensesWidget(QWidget):
         year_label = QLabel("Year:")
         self.year_filter = QComboBox()
         current_year = datetime.now().year
-        self.year_filter.addItems(['All Years'] + [str(year) for year in range(current_year, current_year-5, -1)])
+        years = self.db.get_years_from_expenses()
+        if not years:  # If no data, just show current year
+            years = [current_year]
+        self.year_filter.addItems(['All Years'] + [str(year) for year in years])
         self.year_filter.setCurrentText(str(current_year))  # Set current year as default
-        self.year_filter.currentTextChanged.connect(self.refresh_table)
+        self.year_filter.currentTextChanged.connect(self.on_year_changed)
         filter_layout.addWidget(year_label)
         filter_layout.addWidget(self.year_filter)
         
@@ -384,3 +387,12 @@ class ExpensesWidget(QWidget):
         
         self.total_expenses_label.setText(f"Total: ${total_amount:,.2f}")
         self.num_expenses_label.setText(f"Count: {num_expenses:,}")
+
+    def on_year_changed(self, selected_year):
+        """Handle year selection changes"""
+        if selected_year == 'All Years':
+            self.month_filter.setCurrentText('All Months')
+            self.month_filter.setEnabled(False)
+        else:
+            self.month_filter.setEnabled(True)
+        self.refresh_table()

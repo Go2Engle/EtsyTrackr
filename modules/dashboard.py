@@ -276,16 +276,19 @@ class DashboardWidget(QWidget):
         filter_layout = QHBoxLayout()
         
         self.year_filter = QComboBox()
-        current_year = datetime.now().year
-        self.year_filter.addItems([str(year) for year in range(current_year, current_year-5, -1)])
-        self.year_filter.currentTextChanged.connect(self.refresh_dashboard)
+        years = self.db.get_all_years()  # Get years from both sales and expenses
+        if not years:  # If no data, just show current year
+            years = [datetime.now().year]
+        self.year_filter.addItems(['All Years'] + [str(year) for year in years])
+        self.year_filter.setCurrentText(str(datetime.now().year))
+        self.year_filter.currentTextChanged.connect(self.on_year_changed)
         filter_layout.addWidget(QLabel("Year:"))
         filter_layout.addWidget(self.year_filter)
         
         self.month_filter = QComboBox()
-        self.month_filter.addItems(['All Months'] + list(calendar.month_name)[1:])  
         current_month = datetime.now().month
-        self.month_filter.setCurrentIndex(current_month)  
+        self.month_filter.addItems(['All Months'] + list(calendar.month_name)[1:])
+        self.month_filter.setCurrentText(calendar.month_name[current_month])
         self.month_filter.currentTextChanged.connect(self.refresh_dashboard)
         filter_layout.addWidget(QLabel("Month:"))
         filter_layout.addWidget(self.month_filter)
@@ -429,41 +432,29 @@ class DashboardWidget(QWidget):
             if df.empty:
                 return None
                 
-            date_col = None
-            for col in df.columns:
-                if 'date' in col.lower():
-                    date_col = col
-                    break
+            # Convert date column to datetime
+            df['Date'] = pd.to_datetime(df['Date'])
             
-            if date_col is None:
+            # Apply year filter if not 'All Years'
+            selected_year = self.year_filter.currentText()
+            if selected_year != 'All Years':
+                df = df[df['Date'].dt.year == int(selected_year)]
+            
+            # Apply month filter if not 'All Months'
+            selected_month = self.month_filter.currentText()
+            if selected_month != 'All Months':
+                month_num = list(calendar.month_name).index(selected_month)
+                df = df[df['Date'].dt.month == month_num]
+            
+            if df.empty:
                 return None
                 
-            df[date_col] = pd.to_datetime(df[date_col])
-            
-            selected_year = self.year_filter.currentText()
-            selected_month = self.month_filter.currentText()
-            
-            if selected_year != 'All Years':
-                year = int(selected_year)
-                if selected_month != 'All Months':
-                    month = list(calendar.month_name).index(selected_month)
-                    start_date = datetime(year, month, 1)
-                    if month == 12:
-                        end_date = datetime(year + 1, 1, 1)
-                    else:
-                        end_date = datetime(year, month + 1, 1)
-                    df = df[(df[date_col] >= start_date) & (df[date_col] < end_date)]
-                else:
-                    start_date = datetime(year, 1, 1)
-                    end_date = datetime(year + 1, 1, 1)
-                    df = df[(df[date_col] >= start_date) & (df[date_col] < end_date)]
-            
-            df = df.rename(columns={date_col: 'Date'})
             return df
             
-        except Exception:
+        except Exception as e:
+            print(f"Error getting filtered data: {str(e)}")
             return None
-            
+
     def get_date_filter(self):
         selected_year = self.year_filter.currentText()
         selected_month = self.month_filter.currentText()
@@ -642,6 +633,15 @@ class DashboardWidget(QWidget):
             
         except Exception as e:
             print(f"Error updating charts: {str(e)}")
+
+    def on_year_changed(self, selected_year):
+        """Handle year selection changes"""
+        if selected_year == 'All Years':
+            self.month_filter.setCurrentText('All Months')
+            self.month_filter.setEnabled(False)
+        else:
+            self.month_filter.setEnabled(True)
+        self.refresh_dashboard()
 
     def on_theme_changed(self, is_dark):
         self.refresh_dashboard()
