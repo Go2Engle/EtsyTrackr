@@ -4,6 +4,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon
 import os
 import shutil
+import webbrowser
 from .version import VersionChecker
 
 class SettingsWidget(QWidget):
@@ -68,6 +69,23 @@ class SettingsWidget(QWidget):
         storage_section_layout.addSpacing(20)
         
         layout.addWidget(storage_section)
+        
+        # Support Section
+        support_section = self.create_section("Support Development")
+        support_section_layout = support_section.layout()
+        
+        donate_layout = QHBoxLayout()
+        donate_label = QLabel("If you find EtsyTrackr helpful, consider supporting its development:")
+        donate_layout.addWidget(donate_label)
+        
+        donate_button = QPushButton("Donate")
+        donate_button.setFixedWidth(120)
+        donate_button.clicked.connect(lambda: webbrowser.open('https://donate.stripe.com/dR614U9az5Wig9O7ss'))
+        donate_layout.addWidget(donate_button)
+        donate_layout.addStretch()
+        
+        support_section_layout.addLayout(donate_layout)
+        layout.addWidget(support_section)
         
         # Add a subtle version number at the bottom right
         version_label = QLabel(f"v{VersionChecker.CURRENT_VERSION.lstrip('v')}")
