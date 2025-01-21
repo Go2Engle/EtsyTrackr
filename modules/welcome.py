@@ -4,6 +4,7 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QPushButton,
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 import os
+from .theme import ThemeManager
 
 class WelcomeDialog(QDialog):
     def __init__(self):
@@ -11,8 +12,11 @@ class WelcomeDialog(QDialog):
         self.storage_path = None
         self.setWindowTitle("EtsyTrackr")
         self.setMinimumWidth(500)
-        self.setMinimumHeight(400)  
+        self.setMinimumHeight(400)
+        self.theme_manager = ThemeManager()
+        self.theme_manager.theme_changed.connect(self.apply_theme)
         self.setup_ui()
+        self.apply_theme()
         
     def setup_ui(self):
         layout = QVBoxLayout()
@@ -21,7 +25,7 @@ class WelcomeDialog(QDialog):
         
         # Welcome message
         welcome_label = QLabel("Welcome to EtsyTrackr")
-        welcome_label.setStyleSheet("font-size: 24px; font-weight: bold;")
+        welcome_label.setObjectName("welcomeLabel")
         welcome_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(welcome_label)
         
@@ -30,7 +34,7 @@ class WelcomeDialog(QDialog):
             "Please choose how you would like to set up your data storage:"
         )
         desc_label.setWordWrap(True)
-        desc_label.setStyleSheet("font-size: 14px;")
+        desc_label.setObjectName("descriptionLabel")
         layout.addWidget(desc_label)
         
         # Radio buttons for options
@@ -39,27 +43,13 @@ class WelcomeDialog(QDialog):
             "Choose a location for your new Etsy Tracker data. This will create a new directory\n"
             "to store your statements, receipts, and other data."
         )
-        self.new_dir_radio.setStyleSheet("""
-            QRadioButton {
-                font-size: 13px;
-                padding: 10px;
-                background-color: #f0f0f0;
-                border-radius: 5px;
-            }
-        """)
+        self.new_dir_radio.setObjectName("optionRadio")
         
         self.existing_dir_radio = QRadioButton(
             "Use Existing Data Directory\n"
             "Select an existing Etsy Tracker data directory that contains your previous data."
         )
-        self.existing_dir_radio.setStyleSheet("""
-            QRadioButton {
-                font-size: 13px;
-                padding: 10px;
-                background-color: #f0f0f0;
-                border-radius: 5px;
-            }
-        """)
+        self.existing_dir_radio.setObjectName("optionRadio")
         
         # Button group
         self.button_group = QButtonGroup()
@@ -75,23 +65,49 @@ class WelcomeDialog(QDialog):
         
         # Choose directory button
         self.choose_btn = QPushButton("Choose Directory")
-        self.choose_btn.setStyleSheet("""
-            QPushButton {
-                font-size: 14px;
-                padding: 12px 24px;
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-        """)
+        self.choose_btn.setObjectName("primaryButton")
         self.choose_btn.clicked.connect(self.choose_directory)
         layout.addWidget(self.choose_btn, 0, Qt.AlignCenter)  
         
         self.setLayout(layout)
+    
+    def apply_theme(self):
+        theme = self.theme_manager.dark_theme if self.theme_manager.is_dark_mode() else self.theme_manager.light_theme
+        
+        # Set dialog background
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {theme['background']};
+                color: {theme['text']};
+            }}
+            #welcomeLabel {{
+                font-size: 24px;
+                font-weight: bold;
+                color: {theme['text']};
+            }}
+            #descriptionLabel {{
+                font-size: 14px;
+                color: {theme['text']};
+            }}
+            #optionRadio {{
+                font-size: 13px;
+                padding: 10px;
+                background-color: {theme['surface']};
+                color: {theme['text']};
+                border-radius: 5px;
+            }}
+            #primaryButton {{
+                font-size: 14px;
+                padding: 12px 24px;
+                background-color: {theme['primary']};
+                color: {theme['background']};
+                border: none;
+                border-radius: 5px;
+            }}
+            #primaryButton:hover {{
+                background-color: {theme['secondary']};
+            }}
+        """)
     
     def verify_existing_directory(self, path):
         """Check if the selected directory is a valid Etsy Tracker data directory"""
