@@ -1,0 +1,331 @@
+:root {
+    /* Light theme variables */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --accent-color: #0066ff;
+    --border-color: #dee2e6;
+}
+
+[data-theme="dark"] {
+    /* Dark theme variables */
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --text-primary: #ffffff;
+    --text-secondary: #ced4da;
+    --accent-color: #3d90ff;
+    --border-color: #404040;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+nav {
+    background-color: var(--bg-secondary);
+    padding: 1rem 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+nav .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+#theme-toggle {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.hero {
+    padding: 4rem 0;
+    text-align: center;
+    background-color: var(--bg-secondary);
+}
+
+.hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 3rem;
+}
+
+.dashboard-preview {
+    max-width: 1000px;
+    margin: 0 auto;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-preview img {
+    width: 100%;
+    height: auto;
+    display: none;
+}
+
+/* Show light mode image by default */
+.dashboard-preview .dashboard-light {
+    display: block;
+}
+
+/* Show dark mode image when dark theme is active */
+[data-theme="dark"] .dashboard-preview .dashboard-light {
+    display: none;
+}
+
+[data-theme="dark"] .dashboard-preview .dashboard-dark {
+    display: block;
+}
+
+.button {
+    display: inline-block;
+    padding: 0.8rem 1.5rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.2s;
+}
+
+.button:hover {
+    transform: translateY(-2px);
+}
+
+.button.primary {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.button.secondary {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+}
+
+.features {
+    padding: 4rem 0;
+}
+
+.features h2 {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.feature-card {
+    padding: 2rem;
+    border-radius: 8px;
+    background-color: var(--bg-secondary);
+    text-align: center;
+}
+
+.feature-card i {
+    font-size: 2rem;
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+}
+
+.feature-card h3 {
+    margin-bottom: 1rem;
+}
+
+.feature-card p {
+    color: var(--text-secondary);
+}
+
+.screenshots {
+    padding: 4rem 0;
+    background-color: var(--bg-secondary);
+}
+
+.screenshots h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.carousel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin: 0 -20px;
+}
+
+.carousel-container {
+    overflow: hidden;
+    width: 100%;
+    padding: 0 20px;
+}
+
+.carousel-slide {
+    display: none;
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-slide.active {
+    display: block;
+}
+
+.carousel-slide img {
+    width: 100%;
+    height: auto;
+    display: none;
+}
+
+/* Show light mode image by default */
+.carousel-slide img.light-mode {
+    display: block;
+}
+
+/* Show dark mode image when dark theme is active */
+[data-theme="dark"] .carousel-slide img.light-mode {
+    display: none;
+}
+
+[data-theme="dark"] .carousel-slide img.dark-mode {
+    display: block;
+}
+
+.carousel-button {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    transition: opacity 0.3s;
+}
+
+.carousel-button:hover {
+    opacity: 0.9;
+}
+
+.carousel-button.prev {
+    left: 20px;
+}
+
+.carousel-button.next {
+    right: 20px;
+}
+
+.carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 1rem;
+}
+
+.carousel-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--text-secondary);
+    opacity: 0.5;
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+.carousel-dot.active {
+    opacity: 1;
+    background-color: var(--accent-color);
+}
+
+.donate {
+    padding: 4rem 0;
+    text-align: center;
+    background-color: var(--bg-primary);
+}
+
+.donate h2 {
+    margin-bottom: 1rem;
+}
+
+.donate p {
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto 2rem auto;
+}
+
+.donate-button .button {
+    font-size: 1.1rem;
+    padding: 1rem 2rem;
+}
+
+.donate-button .button i {
+    margin-right: 0.5rem;
+}
+
+footer {
+    background-color: var(--bg-secondary);
+    padding: 2rem 0;
+    text-align: center;
+    margin-top: 4rem;
+}
+
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: 2rem;
+    }
+    
+    .cta-buttons {
+        flex-direction: column;
+    }
+    
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+}
