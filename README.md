@@ -4,6 +4,7 @@
 [![Build](https://img.shields.io/github/actions/workflow/status/Go2Engle/EtsyTrackr/release.yml?style=for-the-badge)](https://github.com/Go2Engle/EtsyTrackr/actions)
 [![License](https://img.shields.io/github/license/Go2Engle/EtsyTrackr?style=for-the-badge)](https://github.com/Go2Engle/EtsyTrackr/blob/main/LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![Donate](https://img.shields.io/badge/Donate-Support%20Development-blue?style=for-the-badge&logo=stripe&logoColor=white)](https://donate.stripe.com/dR614U9az5Wig9O7ss)
 
 ⚠️ **WORK IN PROGRESS**: This application is actively being developed. Features and functionality may change without notice. Use at your own risk.
 
