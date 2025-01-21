@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EtsyTrackr - Etsy Shop Analytics Tool</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <div class="logo">EtsyTrackr</div>
+            <button id="theme-toggle" aria-label="Toggle dark mode">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="container">
+            <h1>Track Your Etsy Shop's Success</h1>
+            <p class="subtitle">Powerful analytics and insights for Etsy sellers</p>
+            <div class="cta-buttons">
+                <a href="https://github.com/Go2Engle/EtsyTrackr/releases" class="button primary">Download Now</a>
+                <a href="https://github.com/Go2Engle/EtsyTrackr" class="button secondary">View on GitHub</a>
+            </div>
+            <div class="dashboard-preview">
+                <img src="screenshots/dashboard.png" alt="EtsyTrackr Dashboard Light Mode" class="dashboard-light">
+                <img src="screenshots/dashboard-dark.png" alt="EtsyTrackr Dashboard Dark Mode" class="dashboard-dark">
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="features">
+            <div class="container">
+                <h2>Key Features</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <i class="fas fa-file-import"></i>
+                        <h3>CSV Import</h3>
+                        <p>Import and analyze your Etsy sales data directly from CSV statements</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-receipt"></i>
+                        <h3>Expense Tracking</h3>
+                        <p>Track and categorize your business expenses with receipt management</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-chart-bar"></i>
+                        <h3>Sales Analytics</h3>
+                        <p>View your sales trends and performance metrics in an intuitive dashboard</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-moon"></i>
+                        <h3>Light & Dark Modes</h3>
+                        <p>Work comfortably with automatic theme switching based on your system preferences</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="screenshots">
+            <div class="container">
+                <h2>Application Screenshots</h2>
+                <div class="carousel">
+                    <button class="carousel-button prev" aria-label="Previous slide">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="carousel-container">
+                        <div class="carousel-slide">
+                            <img src="screenshots/sales.png" alt="Sales Dashboard Light Mode" class="light-mode">
+                            <img src="screenshots/sales-dark.png" alt="Sales Dashboard Dark Mode" class="dark-mode">
+                        </div>
+                        <div class="carousel-slide">
+                            <img src="screenshots/expenses.png" alt="Expenses Dashboard Light Mode" class="light-mode">
+                            <img src="screenshots/expenses-dark.png" alt="Expenses Dashboard Dark Mode" class="dark-mode">
+                        </div>
+                        <div class="carousel-slide">
+                            <img src="screenshots/inventory.png" alt="Inventory Dashboard Light Mode" class="light-mode">
+                            <img src="screenshots/inventory-dark.png" alt="Inventory Dashboard Dark Mode" class="dark-mode">
+                        </div>
+                        <div class="carousel-slide">
+                            <img src="screenshots/settings.png" alt="Settings Light Mode" class="light-mode">
+                            <img src="screenshots/settings-dark.png" alt="Settings Dark Mode" class="dark-mode">
+                        </div>
+                    </div>
+                    <button class="carousel-button next" aria-label="Next slide">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="carousel-dots"></div>
+            </div>
+        </section>
+
+        <section class="donate">
+            <div class="container">
+                <h2>Support Development</h2>
+                <p>If you find EtsyTrackr helpful, consider supporting its development. Your donation helps keep the project alive and enables new features!</p>
+                <div class="donate-button">
+                    <a href="https://donate.stripe.com/dR614U9az5Wig9O7ss" class="button primary">
+                        <i class="fas fa-heart"></i>
+                        Donate
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 EtsyTrackr. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/theme.js"></script>
+    <script src="js/carousel.js"></script>
+</body>
+</html>
