@@ -3,6 +3,11 @@ runtime: org.freedesktop.Platform
 runtime-version: '23.08'
 sdk: org.freedesktop.Sdk
 command: etsytrackr
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.node18
+build-options:
+  env:
+    FLATPAK_ENABLE_SDK_EXT: 'node18'
 finish-args:
   - --share=ipc
   - --socket=x11
@@ -27,6 +32,10 @@ modules:
     buildsystem: simple
     build-commands:
       - pip3 install --prefix=/app pip
+    build-options:
+      env:
+        PIP_NETWORK_INSTALL_FIX: 'yes'
+      network: true
 
   - name: python3-requirements
     buildsystem: simple
@@ -35,6 +44,10 @@ modules:
     sources:
       - type: dir
         path: .
+    build-options:
+      env:
+        PIP_NETWORK_INSTALL_FIX: 'yes'
+      network: true
 
   - name: etsytrackr
     buildsystem: simple
