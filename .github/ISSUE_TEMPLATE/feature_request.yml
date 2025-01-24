@@ -1,0 +1,41 @@
+name: Feature Request
+description: Suggest a new feature for EtsyTrackr
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to suggest a new feature!
+  - type: input
+    id: title
+    attributes:
+      label: Feature Title
+      description: A brief, descriptive title for your feature request
+      placeholder: e.g., Add dark mode support
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Feature Description
+      description: Describe the feature you'd like to see
+      placeholder: A clear and detailed description of what you want to happen
+    validations:
+      required: true
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use Case
+      description: Describe how this feature would be useful
+      placeholder: How would this feature help you use EtsyTrackr better?
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Describe any alternative solutions you've considered
+      placeholder: Are there any workarounds or alternatives you're currently using?
+    validations:
+      required: false

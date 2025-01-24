@@ -1,0 +1,52 @@
+name: Bug Report
+description: Report a bug in EtsyTrackr
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this bug!
+  - type: input
+    id: title
+    attributes:
+      label: Bug Title
+      description: A brief, descriptive title for the bug
+      placeholder: e.g., App crashes when importing large statement
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: Describe what happened
+      placeholder: A clear and detailed description of what the bug is
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App Version
+      description: What version of EtsyTrackr are you running?
+      placeholder: e.g., v1.0.0
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: Describe what you expected to happen
+    validations:
+      required: false
