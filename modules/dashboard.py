@@ -127,26 +127,34 @@ class ChartWidget(QFrame):
         bg_color = theme.get('background', '#f5f5f5')
         text_color = theme.get('text', '#000000')
         border_color = theme.get('border', '#cccccc')
+        primary_color = theme.get('primary', '#1a73e8')
         
-        # Set figure background
-        self.figure.patch.set_facecolor(bg_color)
-        
-        for ax in self.figure.axes:
-            # Set axis background
-            ax.set_facecolor(bg_color)
+        try:
+            # Set figure background
+            self.figure.patch.set_facecolor(bg_color)
             
-            # Set text colors
-            ax.tick_params(colors=text_color)
-            ax.xaxis.label.set_color(text_color)
-            ax.yaxis.label.set_color(text_color)
-            if ax.get_title():
-                ax.title.set_color(text_color)
+            for ax in self.figure.axes:
+                # Set axis background
+                ax.set_facecolor(bg_color)
+                
+                # Set text colors
+                ax.tick_params(colors=text_color)
+                ax.xaxis.label.set_color(text_color)
+                ax.yaxis.label.set_color(text_color)
+                if ax.get_title():
+                    ax.title.set_color(text_color)
+                
+                # Set spine colors
+                for spine in ax.spines.values():
+                    spine.set_color(border_color)
+                    
+                # Update line colors if there are any lines
+                for line in ax.get_lines():
+                    line.set_color(primary_color)
             
-            # Set spine colors
-            for spine in ax.spines.values():
-                spine.set_color(border_color)
-        
-        self.canvas.draw()
+            self.canvas.draw()
+        except Exception as e:
+            print(f"Warning: Error updating chart theme: {str(e)}")
     
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -234,9 +242,11 @@ class ChartWidget(QFrame):
                 return
                 
             bottom = np.zeros(len(data['labels']))
+            colors = ['#1a73e8', '#34a853', '#fbbc04', '#ea4335', '#46bdc6']  # Fixed color palette
+            
             for i, values in enumerate(data['values']):
-                if isinstance(values, (list, np.ndarray)) and len(values) > 0:  
-                    color = f"#{int(primary_color[1:], 16) + i*0x222222:06x}"
+                if isinstance(values, (list, np.ndarray)) and len(values) > 0:
+                    color = colors[i % len(colors)]  # Cycle through colors
                     ax.bar(data['labels'], values, bottom=bottom,
                           label=series_names[i] if series_names else f'Series {i}',
                           color=color)
