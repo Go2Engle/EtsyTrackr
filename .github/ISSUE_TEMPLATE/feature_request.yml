@@ -7,14 +7,6 @@ body:
     attributes:
       value: |
         Thanks for taking the time to suggest a new feature!
-  - type: input
-    id: title
-    attributes:
-      label: Feature Title
-      description: A brief, descriptive title for your feature request
-      placeholder: e.g., Add dark mode support
-    validations:
-      required: true
   - type: textarea
     id: description
     attributes:
