@@ -143,6 +143,8 @@ class Database:
                             'Item Transaction Fee': 0.0,
                             'Processing Fee': 0.0,
                             'Listing Fee': 0.0,
+                            'Offsite Ads Fee': 0.0,
+                            'Etsy Ads Fee': 0.0,
                             'Net': 0.0
                         }
                     # Add the fee or credit
@@ -168,6 +170,8 @@ class Database:
                         'Item Transaction Fee': 0.0,
                         'Processing Fee': 0.0,
                         'Listing Fee': 0.0,
+                        'Offsite Ads Fee': 0.0,
+                        'Etsy Ads Fee': 0.0,
                         'Net': self.clean_amount(row['Net'])
                     }
                 continue
@@ -185,6 +189,8 @@ class Database:
                     'Item Transaction Fee': 0.0,
                     'Processing Fee': 0.0,
                     'Listing Fee': 0.0,
+                    'Offsite Ads Fee': 0.0,
+                    'Etsy Ads Fee': 0.0,
                     'Net': 0.0
                 }
             
@@ -224,12 +230,47 @@ class Database:
                     elif 'Processing fee' in row['Title'] or 'Credit for processing fee' in row['Title']:
                         orders[order_id]['Processing Fee'] += fee_amount
                         orders[order_id]['Net'] += fee_amount
-                
+                elif row['Type'] == 'Marketing':
+                    if 'Fee for sale made through Offsite Ads' in row['Title']:
+                        fee_amount = self.clean_amount(row['Net'])
+                        # Extract order ID from Info field for Offsite Ads
+                        if 'Order #' in str(row['Info']):
+                            order_id = row['Info'].split('Order #')[-1].split()[0]
+                            if order_id in orders:
+                                orders[order_id]['Offsite Ads Fee'] = fee_amount
+                                orders[order_id]['Net'] += fee_amount
                 elif row['Type'] == 'Tax':
                     tax_amount = self.clean_amount(row['Net'])
-                    if 'Sales tax paid by buyer' in row['Title'] or 'Refund to buyer for sales tax' in row['Title']:
-                        orders[order_id]['Sales Tax'] += tax_amount
-                        orders[order_id]['Net'] += tax_amount
+                    # Extract order ID from Info field for tax
+                    if 'Order #' in str(row['Info']):
+                        order_id = row['Info'].split('Order #')[-1].split()[0]
+                        if order_id in orders:
+                            orders[order_id]['Sales Tax'] = tax_amount
+                            orders[order_id]['Net'] += tax_amount
+        
+        # Handle standalone Etsy Ads fees (not associated with orders)
+        for _, row in df.iterrows():
+            if row['Type'] == 'Marketing' and 'Etsy Ads' in row['Title']:
+                fee_amount = self.clean_amount(row['Net'])
+                # Create a unique key for this Etsy Ads charge
+                ads_date = row['Date'].strftime('%Y-%m-%d')
+                key = f"EtsyAds_{ads_date}"
+                
+                orders[key] = {
+                    'Date': row['Date'],
+                    'Order ID': 'Etsy Ads',
+                    'Items': f"Ad clicks on {ads_date}",
+                    'Sale Amount': 0.0,
+                    'Shipping Fee': 0.0,
+                    'Sales Tax': 0.0,
+                    'Shipping Transaction Fee': 0.0,
+                    'Item Transaction Fee': 0.0,
+                    'Processing Fee': 0.0,
+                    'Listing Fee': 0.0,
+                    'Offsite Ads Fee': 0.0,
+                    'Etsy Ads Fee': fee_amount,
+                    'Net': fee_amount
+                }
         
         # Convert orders to DataFrame
         orders_list = list(orders.values())

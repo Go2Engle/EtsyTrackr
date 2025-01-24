@@ -349,18 +349,18 @@ class DashboardWidget(QWidget):
         stats_container = QVBoxLayout()
         stats_container.setSpacing(10)  # Reduced spacing between rows
         
-        # First row of stats
+        # First row - Sales metrics
         row1_layout = QHBoxLayout()
-        row1_layout.setSpacing(10)  # Keep spacing between cards
+        row1_layout.setSpacing(10)
         self.total_sales_card = StatCard("Total Sales", "$0.00", self)
         self.total_orders_card = StatCard("Total Orders", "0", self)
-        self.avg_order_value_card = StatCard("Average Order Value", "$0.00", self)
+        self.avg_order_value_card = StatCard("Avg Order Value", "$0.00", self)
         row1_layout.addWidget(self.total_sales_card)
         row1_layout.addWidget(self.total_orders_card)
         row1_layout.addWidget(self.avg_order_value_card)
         stats_container.addLayout(row1_layout)
         
-        # Second row of stats
+        # Second row - Basic fees
         row2_layout = QHBoxLayout()
         row2_layout.setSpacing(10)
         self.total_shipping_card = StatCard("Total Shipping", "$0.00", self)
@@ -371,21 +371,25 @@ class DashboardWidget(QWidget):
         row2_layout.addWidget(self.total_fees_card)
         stats_container.addLayout(row2_layout)
         
-        # Third row of stats
+        # Third row - Additional fees
         row3_layout = QHBoxLayout()
         row3_layout.setSpacing(10)
         self.total_listing_fees_card = StatCard("Total Listing Fees", "$0.00", self)
-        self.net_income_card = StatCard("Net Income", "$0.00", self)
-        self.profit_margin_card = StatCard("Profit Margin", "0%", self)
+        self.offsite_ads_card = StatCard("Total Offsite Ads", "$0.00", self)
+        self.etsy_ads_card = StatCard("Total Etsy Ads", "$0.00", self)
         row3_layout.addWidget(self.total_listing_fees_card)
-        row3_layout.addWidget(self.net_income_card)
-        row3_layout.addWidget(self.profit_margin_card)
+        row3_layout.addWidget(self.offsite_ads_card)
+        row3_layout.addWidget(self.etsy_ads_card)
         stats_container.addLayout(row3_layout)
         
-        # Fourth row - single card
+        # Fourth row - Profit metrics
         row4_layout = QHBoxLayout()
         row4_layout.setSpacing(10)
+        self.net_income_card = StatCard("Net Income", "$0.00", self)
+        self.profit_margin_card = StatCard("Profit Margin", "0%", self)
         self.total_profit_card = StatCard("Total Profit After Expenses", "$0.00", self)
+        row4_layout.addWidget(self.net_income_card)
+        row4_layout.addWidget(self.profit_margin_card)
         row4_layout.addWidget(self.total_profit_card)
         stats_container.addLayout(row4_layout)
         
@@ -487,6 +491,8 @@ class DashboardWidget(QWidget):
         self.total_tax_card.update_value("$0.00")
         self.total_fees_card.update_value("$0.00")
         self.total_listing_fees_card.update_value("$0.00")
+        self.offsite_ads_card.update_value("$0.00")
+        self.etsy_ads_card.update_value("$0.00")
         self.net_income_card.update_value("$0.00")
         self.profit_margin_card.update_value("0%")
         self.total_profit_card.update_value("$0.00")
@@ -517,7 +523,9 @@ class DashboardWidget(QWidget):
             total_tax = df['Sales Tax'].sum()
             total_fees = df['Item Transaction Fee'].sum() + df['Shipping Transaction Fee'].sum() + df['Processing Fee'].sum()
             total_listing_fees = df['Listing Fee'].sum()
-            net_income = total_sales + total_shipping + total_tax + total_fees + total_listing_fees
+            total_offsite_ads = df['Offsite Ads Fee'].sum()
+            total_etsy_ads = df['Etsy Ads Fee'].sum()
+            net_income = total_sales + total_shipping + total_tax + total_fees + total_listing_fees + total_offsite_ads + total_etsy_ads
             profit_margin = (net_income / total_sales * 100) if total_sales > 0 else 0
             
             start_date, end_date = self.get_date_filter()
@@ -543,6 +551,8 @@ class DashboardWidget(QWidget):
             self.total_tax_card.update_value(f"${abs(total_tax):,.2f}")
             self.total_fees_card.update_value(f"${abs(total_fees):,.2f}")
             self.total_listing_fees_card.update_value(f"${abs(total_listing_fees):,.2f}")
+            self.offsite_ads_card.update_value(f"${abs(total_offsite_ads):,.2f}")
+            self.etsy_ads_card.update_value(f"${abs(total_etsy_ads):,.2f}")
             self.net_income_card.update_value(f"${net_income:,.2f}")
             self.profit_margin_card.update_value(f"{profit_margin:.1f}%")
             
@@ -600,7 +610,17 @@ class DashboardWidget(QWidget):
                     if row['Listing Fee'] != 0:
                         fees_data['Date'].append(date)
                         fees_data['Amount'].append(abs(row['Listing Fee']))
-                        fees_data['Type'].append('Etsy Fees')
+                        fees_data['Type'].append('Listing Fees')
+                        
+                    if row['Offsite Ads Fee'] != 0:
+                        fees_data['Date'].append(date)
+                        fees_data['Amount'].append(abs(row['Offsite Ads Fee']))
+                        fees_data['Type'].append('Offsite Ads')
+                        
+                    if row['Etsy Ads Fee'] != 0:
+                        fees_data['Date'].append(date)
+                        fees_data['Amount'].append(abs(row['Etsy Ads Fee']))
+                        fees_data['Type'].append('Etsy Ads')
             
             expenses = self.db.get_expenses()
             if expenses:
@@ -624,12 +644,15 @@ class DashboardWidget(QWidget):
                 plot_data = {
                     'labels': daily_fees.index,
                     'values': [daily_fees['Etsy Fees'].values if 'Etsy Fees' in daily_fees else [],
+                             daily_fees['Listing Fees'].values if 'Listing Fees' in daily_fees else [],
+                             daily_fees['Offsite Ads'].values if 'Offsite Ads' in daily_fees else [],
+                             daily_fees['Etsy Ads'].values if 'Etsy Ads' in daily_fees else [],
                              daily_fees['Other Expenses'].values if 'Other Expenses' in daily_fees else []]
                 }
                 
                 self.expenses_chart.plot_data(plot_data, chart_type='stacked_bar', 
                                            title='Daily Expenses', 
-                                           series_names=['Etsy Fees', 'Other Expenses'])
+                                           series_names=['Etsy Fees', 'Listing Fees', 'Offsite Ads', 'Etsy Ads', 'Other Expenses'])
             
         except Exception as e:
             print(f"Error updating charts: {str(e)}")

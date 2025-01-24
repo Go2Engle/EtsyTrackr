@@ -77,6 +77,8 @@ class SalesWidget(QWidget):
         self.trans_fees_label = QLabel("<b>Transaction Fees</b><br>$0.00")
         self.listing_fees_label = QLabel("<b>Listing Fees</b><br>$0.00")
         self.processing_fees_label = QLabel("<b>Processing Fees</b><br>$0.00")
+        self.offsite_ads_fees_label = QLabel("<b>Offsite Ads</b><br>$0.00")
+        self.etsy_ads_fees_label = QLabel("<b>Etsy Ads</b><br>$0.00")
         self.tax_label = QLabel("<b>Tax</b><br>$0.00")
         self.refunds_label = QLabel("<b>Refunds</b><br>$0.00")
         self.net_profit_label = QLabel("<b>Net Profit</b><br>$0.00")
@@ -91,8 +93,9 @@ class SalesWidget(QWidget):
         """
         
         for label in [self.sales_label, self.shipping_label, self.trans_fees_label,
-                     self.listing_fees_label, self.processing_fees_label, self.tax_label,
-                     self.refunds_label, self.net_profit_label]:
+                     self.listing_fees_label, self.processing_fees_label, 
+                     self.offsite_ads_fees_label, self.etsy_ads_fees_label,
+                     self.tax_label, self.refunds_label, self.net_profit_label]:
             label.setAlignment(Qt.AlignCenter)
             label.setTextFormat(Qt.RichText)
             label.setStyleSheet(label_style)
@@ -107,8 +110,10 @@ class SalesWidget(QWidget):
         stats_layout.addWidget(self.listing_fees_label, 1, 0)
         stats_layout.addWidget(self.processing_fees_label, 1, 1)
         stats_layout.addWidget(self.tax_label, 1, 2)
-        stats_layout.addWidget(self.refunds_label, 2, 0)
-        stats_layout.addWidget(self.net_profit_label, 2, 1)  # Remove span, place in center column
+        stats_layout.addWidget(self.offsite_ads_fees_label, 2, 0)
+        stats_layout.addWidget(self.etsy_ads_fees_label, 2, 1)
+        stats_layout.addWidget(self.refunds_label, 2, 2)
+        stats_layout.addWidget(self.net_profit_label, 3, 1)  # Place in center column
         
         self.stats_frame.setLayout(stats_layout)
         center_layout.addWidget(self.stats_frame)
@@ -167,11 +172,11 @@ class SalesWidget(QWidget):
         
         # Sales table
         self.table = QTableWidget()
-        self.table.setColumnCount(11)
+        self.table.setColumnCount(13)  # Increased column count for new fee columns
         self.table.setHorizontalHeaderLabels([
-            'Date', 'Order ID', 'Items', 'Sale Amount', 'Shipping Fee',
-            'Sales Tax', 'Ship Trans Fee', 'Item Trans Fee', 'Processing Fee',
-            'Listing Fee', 'Net'
+            'Date', 'Order ID', 'Items', 'Sale Amount', 'Shipping', 'Tax',
+            'Ship Trans Fee', 'Item Trans Fee', 'Processing Fee', 'Listing Fee',
+            'Offsite Ads', 'Etsy Ads', 'Net'
         ])
         
         # Set table properties
@@ -197,7 +202,9 @@ class SalesWidget(QWidget):
         self.table.setColumnWidth(7, 100)  # Item Trans Fee
         self.table.setColumnWidth(8, 100)  # Processing Fee
         self.table.setColumnWidth(9, 100)  # Listing Fee
-        self.table.setColumnWidth(10, 100)  # Net
+        self.table.setColumnWidth(10, 100)  # Offsite Ads Fee
+        self.table.setColumnWidth(11, 100)  # Etsy Ads Fee
+        self.table.setColumnWidth(12, 100)  # Net
         
         # Enable context menu
         self.table.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -281,6 +288,8 @@ class SalesWidget(QWidget):
                         'Item Transaction Fee': row['Item Transaction Fee'],
                         'Processing Fee': row['Processing Fee'],
                         'Listing Fee': row['Listing Fee'],
+                        'Offsite Ads Fee': row.get('Offsite Ads Fee', 0),
+                        'Etsy Ads Fee': row.get('Etsy Ads Fee', 0),
                         'Net': row['Net']
                     })
             except Exception as e:
@@ -314,6 +323,8 @@ class SalesWidget(QWidget):
             total_processing_fees = 0
             total_tax = 0
             total_refunds = 0
+            total_offsite_ads_fees = 0
+            total_etsy_ads_fees = 0
             
             # Format and display data
             for i, row in df.iterrows():
@@ -348,6 +359,8 @@ class SalesWidget(QWidget):
                 row_net += float(row.get('Item Transaction Fee', 0) or 0)
                 row_net += float(row.get('Processing Fee', 0) or 0)
                 row_net += float(row.get('Listing Fee', 0) or 0)
+                row_net += float(row.get('Offsite Ads Fee', 0) or 0)
+                row_net += float(row.get('Etsy Ads Fee', 0) or 0)
                 
                 # Display financial columns
                 for col_name, col_idx in financial_cols:
@@ -384,12 +397,24 @@ class SalesWidget(QWidget):
                     elif col_name == 'Listing Fee':
                         total_listing_fees += amount
                 
+                # Add Offsite Ads Fee column
+                offsite_ads_item = QTableWidgetItem(f"${row.get('Offsite Ads Fee', 0):.2f}")
+                offsite_ads_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                self.table.setItem(i, 10, offsite_ads_item)
+                total_offsite_ads_fees += float(row.get('Offsite Ads Fee', 0) or 0)
+                
+                # Add Etsy Ads Fee column
+                etsy_ads_item = QTableWidgetItem(f"${row.get('Etsy Ads Fee', 0):.2f}")
+                etsy_ads_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                self.table.setItem(i, 11, etsy_ads_item)
+                total_etsy_ads_fees += float(row.get('Etsy Ads Fee', 0) or 0)
+                
                 # Add Net column
                 net_item = QTableWidgetItem(f"${row_net:.2f}")
                 net_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 if row_net < 0:
                     net_item.setForeground(QBrush(QColor('red')))
-                self.table.setItem(i, 10, net_item)
+                self.table.setItem(i, 12, net_item)
             
             # Calculate net profit
             net_profit = (total_sales + 
@@ -398,7 +423,9 @@ class SalesWidget(QWidget):
                            total_listing_fees + 
                            total_processing_fees +
                            total_tax +
-                           total_refunds)  # Refunds are now properly negative
+                           total_refunds +
+                           total_offsite_ads_fees +
+                           total_etsy_ads_fees)  # Refunds are now properly negative
             
             # Update the sales stats labels
             self.sales_label.setText(f"<b>Sales</b><br>${total_sales:,.2f}")
@@ -407,6 +434,8 @@ class SalesWidget(QWidget):
             self.listing_fees_label.setText(f"<b>Listing Fees</b><br>${abs(total_listing_fees):,.2f}")
             self.processing_fees_label.setText(f"<b>Processing Fees</b><br>${abs(total_processing_fees):,.2f}")
             self.tax_label.setText(f"<b>Tax</b><br>${abs(total_tax):,.2f}")
+            self.offsite_ads_fees_label.setText(f"<b>Offsite Ads</b><br>${abs(total_offsite_ads_fees):,.2f}")
+            self.etsy_ads_fees_label.setText(f"<b>Etsy Ads</b><br>${abs(total_etsy_ads_fees):,.2f}")
             self.refunds_label.setText(f"<b>Refunds</b><br>${abs(total_refunds):,.2f}")
             self.net_profit_label.setText(f"<b>Net Profit</b><br>${net_profit:,.2f}")
             
@@ -459,6 +488,7 @@ class SalesWidget(QWidget):
         # Update all labels with new style
         for label in [self.sales_label, self.shipping_label, self.trans_fees_label,
                      self.listing_fees_label, self.processing_fees_label, self.tax_label,
+                     self.offsite_ads_fees_label, self.etsy_ads_fees_label,
                      self.refunds_label]:
             label.setStyleSheet(label_style)
         
@@ -625,13 +655,19 @@ class SalesWidget(QWidget):
     
     def copy_row_data(self, row):
         """Copy row data to clipboard in a formatted way"""
-        headers = [self.table.horizontalHeaderItem(i).text() for i in range(self.table.columnCount())]
-        row_data = [self.table.item(row, i).text() if self.table.item(row, i) else "" for i in range(self.table.columnCount())]
-        
-        # Format as key-value pairs
-        formatted_data = []
-        for header, value in zip(headers, row_data):
-            formatted_data.append(f"{header}: {value}")
-        
-        # Copy to clipboard
-        QApplication.clipboard().setText("\n".join(formatted_data))
+        try:
+            data = []
+            for col in range(self.table.columnCount()):
+                item = self.table.item(row, col)
+                if item:
+                    data.append(f"{self.table.horizontalHeaderItem(col).text()}: {item.text()}")
+            
+            # Format data with line breaks
+            formatted_data = '\n'.join(data)
+            
+            # Copy to clipboard
+            clipboard = QApplication.clipboard()
+            clipboard.setText(formatted_data)
+            
+        except Exception as e:
+            print(f"Error copying row data: {e}")
