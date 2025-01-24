@@ -128,7 +128,7 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     container:
-      image: bilelmoussaoui/flatpak-github-actions:freedesktop-24.08
+      image: bilelmoussaoui/flatpak-github-actions:freedesktop-23.08
       options: --privileged
     steps:
       - uses: actions/checkout@v4
@@ -141,7 +141,7 @@ jobs:
       - name: Install system dependencies
         run: |
           apt-get update
-          apt-get install -y flatpak-builder
+          apt-get install -y flatpak-builder libgl1-mesa-dev libxcb-xinerama0
 
       - name: Build Flatpak
         run: |

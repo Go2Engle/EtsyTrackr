@@ -9,14 +9,33 @@ finish-args:
   - --socket=wayland
   - --filesystem=home
   - --share=network
+  - --device=dri
 modules:
+  - name: mesa-libs
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/lib
+      - cp -a /usr/lib/x86_64-linux-gnu/libGL* /app/lib/
+    sources:
+      - type: file
+        only-arches:
+          - x86_64
+        dest-filename: libGL.so.1
+        path: /usr/lib/x86_64-linux-gnu/libGL.so.1
+
+  - name: python3-pip
+    buildsystem: simple
+    build-commands:
+      - pip3 install --prefix=/app pip
+
   - name: python3-requirements
     buildsystem: simple
     build-commands:
-      - pip3 install --prefix=/app --no-deps .
+      - pip3 install --prefix=/app -r requirements.txt
     sources:
-      - type: file
-        path: requirements.txt
+      - type: dir
+        path: .
+
   - name: etsytrackr
     buildsystem: simple
     build-commands:
