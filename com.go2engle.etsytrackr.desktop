@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=EtsyTrackr
+Comment=Track and manage your Etsy shop sales and expenses
+Type=Application
+Exec=etsytrackr
+Icon=com.go2engle.etsytrackr
+Categories=Office;Finance;
+Keywords=etsy;sales;tracking;business;

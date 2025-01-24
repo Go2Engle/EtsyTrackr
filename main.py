@@ -46,10 +46,13 @@ class MainWindow(QMainWindow):
                 storage_path = welcome.storage_path
                 self.settings.setValue('storage_location', storage_path)
                 
-                # Only create directories if this is a new data directory
-                if not os.path.exists(os.path.join(storage_path, 'receipts')):
-                    os.makedirs(os.path.join(storage_path, 'receipts'), exist_ok=True)
-                    os.makedirs(os.path.join(storage_path, 'statements'), exist_ok=True)
+                # Create directories with proper permissions for Linux
+                receipts_path = os.path.join(storage_path, 'receipts')
+                if not os.path.exists(receipts_path):
+                    os.makedirs(receipts_path, mode=0o755, exist_ok=True)
+                statements_path = os.path.join(storage_path, 'statements')
+                if not os.path.exists(statements_path):
+                    os.makedirs(statements_path, mode=0o755, exist_ok=True)
             else:
                 # If user cancels, we can't continue
                 sys.exit()
@@ -64,8 +67,12 @@ class MainWindow(QMainWindow):
             self.settings.setValue('storage_location', storage_path)
             
             # Create necessary subdirectories
-            os.makedirs(os.path.join(storage_path, 'receipts'), exist_ok=True)
-            os.makedirs(os.path.join(storage_path, 'statements'), exist_ok=True)
+            receipts_path = os.path.join(storage_path, 'receipts')
+            if not os.path.exists(receipts_path):
+                os.makedirs(receipts_path, mode=0o755, exist_ok=True)
+            statements_path = os.path.join(storage_path, 'statements')
+            if not os.path.exists(statements_path):
+                os.makedirs(statements_path, mode=0o755, exist_ok=True)
     
     def setup_ui(self):
         """Set up the main window UI"""

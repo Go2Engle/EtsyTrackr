@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.go2engle.etsytrackr</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>EtsyTrackr</name>
+  <summary>Track and manage your Etsy shop sales and expenses</summary>
+  
+  <description>
+    <p>
+      EtsyTrackr is a comprehensive tool for Etsy shop owners to track their sales,
+      manage expenses, and analyze business performance. Features include:
+    </p>
+    <ul>
+      <li>Sales tracking and analysis</li>
+      <li>Expense management</li>
+      <li>Receipt organization</li>
+      <li>Business performance metrics</li>
+    </ul>
+  </description>
+  
+  <launchable type="desktop-id">com.go2engle.etsytrackr.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <!-- Add screenshot URL here when available -->
+    </screenshot>
+  </screenshots>
+  
+  <url type="homepage">https://github.com/Go2Engle/EtsyTrackr</url>
+  
+  <provides>
+    <binary>etsytrackr</binary>
+  </provides>
+  
+  <releases>
+    <release version="1.0.0" date="2025-01-24">
+      <description>
+        <p>Initial release of EtsyTrackr</p>
+      </description>
+    </release>
+  </releases>
+  
+  <content_rating type="oars-1.1" />
+</component>
