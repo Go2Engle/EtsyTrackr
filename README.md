@@ -177,17 +177,3 @@ This is a work in progress. If you find bugs or have suggestions for improvement
 1. Open an issue
 2. Describe the problem or enhancement
 3. Include steps to reproduce if reporting a bug
-
-## License
-
-This project is licensed under a modified MIT License that explicitly prohibits commercial resale. While the software is open source and free to use, modify, and distribute, it **cannot** be resold by any third party.
-
-Key points:
-- Free to use
-- Free to modify
-- Free to distribute
-- Free to use in personal or business contexts
-- Cannot be resold commercially
-- Cannot be included in paid packages/services
-
-See the [LICENSE](LICENSE) file for the complete terms.
