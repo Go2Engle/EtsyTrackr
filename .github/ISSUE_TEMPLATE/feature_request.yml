@@ -16,7 +16,7 @@ body:
     validations:
       required: true
   - type: textarea
-    id: use_case
+    id: usecase
     attributes:
       label: Use Case
       description: Describe how this feature would be useful
