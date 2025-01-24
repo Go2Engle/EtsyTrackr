@@ -17,11 +17,7 @@ A desktop application to help Etsy sellers track their business finances, includ
 
 ## Platform Support
 
-| Platform | Status | Notes |
-|----------|--------|-------|
-| Windows  | ✅ Tested | Primary development platform |
-| macOS    | ⚠️ Untested | Build not available |
-| Linux    | ⚠️ Untested | Build not available |
+Currently, EtsyTrackr is only available for Windows. Support for other platforms may be added in the future.
 
 ## Screenshots
 
