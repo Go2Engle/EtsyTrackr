@@ -41,6 +41,34 @@ jobs:
         with:
           files: Output/EtsyTrackr_Setup.exe
 
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11.8
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fuse libfuse2 python3-tk python3-dev
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build AppImage
+        run: python build.py --mode appimage
+
+      - name: Upload AppImage Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/appimage/EtsyTrackr-x86_64.AppImage
+
   # build-macos:
   #   runs-on: macos-latest
   #   steps:
@@ -99,7 +127,7 @@ jobs:
   #             <key>CFBundleIconFile</key>
   #             <string>icon.png</string>
   #             <key>CFBundleIdentifier</key>
-  #             <string>com.etsytrackr.app</string>
+  #             <string>com.go2engle.etsytrackr</string>
   #             <key>CFBundleName</key>
   #             <string>EtsyTrackr</string>
   #             <key>CFBundlePackageType</key>
@@ -114,69 +142,21 @@ jobs:
   #         </plist>
   #         EOF
           
-  #         # Create DMG with reduced size
-  #         hdiutil create -size 200m -volname "EtsyTrackr" -srcfolder EtsyTrackr.app -ov -format UDZO EtsyTrackr.dmg
-          
-  #         # Move DMG back to dist directory
-  #         mv EtsyTrackr.dmg "$GITHUB_WORKSPACE/dist/"
+  #         # Create DMG
+  #         brew install create-dmg
+  #         create-dmg \
+  #           --volname "EtsyTrackr" \
+  #           --volicon "icon.png" \
+  #           --window-pos 200 120 \
+  #           --window-size 600 300 \
+  #           --icon-size 100 \
+  #           --icon "EtsyTrackr.app" 175 120 \
+  #           --hide-extension "EtsyTrackr.app" \
+  #           --app-drop-link 425 120 \
+  #           "EtsyTrackr.dmg" \
+  #           "EtsyTrackr.app"
 
-  #     - name: Upload Release Asset
+  #     - name: Upload DMG Release Asset
   #       uses: softprops/action-gh-release@v2
   #       with:
-  #         files: dist/EtsyTrackr.dmg
-
-  # build-linux:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: 3.11.8
-
-  #     - name: Install system dependencies
-  #       run: |
-  #         sudo apt-get update
-  #         sudo apt-get install -y libxcb-xinerama0 fuse libfuse2
-
-  #     - name: Install dependencies
-  #       run: |
-  #         python -m pip install --upgrade pip
-  #         pip install -r requirements.txt
-
-  #     - name: Build executable
-  #       run: python build.py
-
-  #     - name: Create AppImage
-  #       run: |
-  #         cd dist
-  #         mkdir -p EtsyTrackr.AppDir
-  #         cp etsytrackr EtsyTrackr.AppDir/AppRun
-  #         chmod +x EtsyTrackr.AppDir/AppRun
-          
-  #         # Create desktop entry file
-  #         cat > EtsyTrackr.AppDir/etsytrackr.desktop << EOF
-  #         [Desktop Entry]
-  #         Name=EtsyTrackr
-  #         Exec=AppRun
-  #         Icon=etsytrackr
-  #         Type=Application
-  #         Categories=Utility;
-  #         EOF
-          
-  #         # Copy icon
-  #         cp ../assets/icon.png EtsyTrackr.AppDir/etsytrackr.png
-          
-  #         # Download and extract appimagetool
-  #         wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-  #         chmod +x appimagetool-x86_64.AppImage
-  #         ./appimagetool-x86_64.AppImage --appimage-extract
-          
-  #         # Create AppImage
-  #         ARCH=x86_64 ./squashfs-root/AppRun EtsyTrackr.AppDir EtsyTrackr.AppImage
-
-  #     - name: Upload Release Asset
-  #       uses: softprops/action-gh-release@v2
-  #       with:
-  #         files: dist/EtsyTrackr.AppImage
+  #         files: /private/tmp/etsytrackr_build/EtsyTrackr.dmg
