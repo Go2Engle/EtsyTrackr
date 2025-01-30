@@ -23,6 +23,8 @@ class VersionChecker:
                 # Check for platform-specific installer in assets
                 if sys.platform.startswith('linux'):
                     installer_name = "EtsyTrackr-x86_64.AppImage"
+                elif sys.platform == 'darwin':
+                    installer_name = "EtsyTrackr.dmg"  # macOS disk image
                 else:
                     installer_name = "EtsyTrackr_Setup.exe"  # Windows installer
                 

@@ -2,7 +2,7 @@ import sys
 import os
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, 
                            QTabWidget, QFileDialog, QMessageBox, QDialog)
-from PySide6.QtCore import QSettings
+from PySide6.QtCore import QSettings, Qt
 from PySide6.QtGui import QIcon
 from modules.dashboard import DashboardWidget
 from modules.expenses import ExpensesWidget
@@ -116,8 +116,27 @@ def main():
         os.environ["QT_QPA_PLATFORM"] = "xcb"
         # Ensure proper integration with the system theme on Linux
         os.environ["QT_QPA_PLATFORMTHEME"] = "gtk3"
+    elif sys.platform == 'darwin':
+        # Enable proper high DPI scaling on macOS
+        os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+        # Enable proper macOS dark mode support
+        os.environ["QT_MAC_WANTS_LAYER"] = "1"
     
     app = QApplication(sys.argv)
+    
+    # Set application metadata
+    app.setApplicationName("EtsyTrackr")
+    app.setOrganizationName("EtsyTrackr")
+    
+    # macOS specific setup
+    if sys.platform == 'darwin':
+        app.setApplicationDisplayName("EtsyTrackr")
+        # Ensure the app shows up in the dock with the proper name
+        app.setDesktopFileName("EtsyTrackr")
+        
+        # Enable native macOS menu bar
+        app.setAttribute(Qt.AA_DontShowIconsInMenus)
+    
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
