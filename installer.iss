@@ -1,5 +1,5 @@
 #define MyAppName "EtsyTrackr"
-#define MyAppVersion "0.7.0"
+#define MyAppVersion "0.7.1"
 #define MyAppPublisher "EtsyTrackr"
 #define MyAppURL "https://github.com/go2engle/EtsyTrackr"
 #define MyAppExeName "EtsyTrackr.exe"
