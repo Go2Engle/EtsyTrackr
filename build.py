@@ -191,7 +191,9 @@ def build_dmg():
         
         # Create DMG
         print("\nCreating DMG...")
-        dmg_path = os.path.join('dist', 'EtsyTrackr.dmg')
+        dmg_dir = os.path.join('dist', 'dmg')
+        os.makedirs(dmg_dir, exist_ok=True)
+        dmg_path = os.path.join(dmg_dir, 'EtsyTrackr.dmg')
         
         # Remove existing DMG
         if os.path.exists(dmg_path):

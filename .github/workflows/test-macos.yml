@@ -59,17 +59,17 @@ jobs:
             ls -R dist/dir/EtsyTrackr.app/
           fi
           
-          if [ -f "dist/EtsyTrackr.dmg" ]; then
+          if [ -f "dist/dmg/EtsyTrackr.dmg" ]; then
             echo "DMG file created successfully"
-            ls -l dist/EtsyTrackr.dmg
+            ls -l dist/dmg/EtsyTrackr.dmg
           else
             echo "DMG file not found!"
           fi
 
       - name: Upload DMG
-        if: success() && hashFiles('dist/EtsyTrackr.dmg') != ''
+        if: success() && hashFiles('dist/dmg/EtsyTrackr.dmg') != ''
         uses: actions/upload-artifact@v4
         with:
           name: EtsyTrackr-macOS
-          path: dist/EtsyTrackr.dmg
+          path: dist/dmg/EtsyTrackr.dmg
           retention-days: 5
