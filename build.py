@@ -152,6 +152,19 @@ Keywords=etsy;shop;tracking;finance;inventory;"""
         f.write(desktop_content)
     return desktop_path
 
+def sign_mac_app(app_path):
+    """Sign the macOS app bundle with ad-hoc signature"""
+    try:
+        print("Signing app bundle...")
+        # Create an ad-hoc signature
+        cmd = ['codesign', '--force', '--deep', '--sign', '-', app_path]
+        subprocess.run(cmd, check=True)
+        print(f"Successfully signed app bundle at: {app_path}")
+        return True
+    except Exception as e:
+        print(f"Warning: Could not sign app bundle: {e}")
+        return False
+
 def build_dmg():
     """Build DMG for macOS"""
     print("Building DMG...")
@@ -168,6 +181,9 @@ def build_dmg():
         if not os.path.exists(app_path):
             print(f"Error: App bundle not found at {app_path}")
             return False
+            
+        # Sign the app bundle
+        sign_mac_app(app_path)
             
         print(f"Found app bundle at: {app_path}")
         print("App bundle contents:")

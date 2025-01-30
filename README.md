@@ -17,7 +17,7 @@ A desktop application to help Etsy sellers track their business finances, includ
 
 ## Platform Support
 
-Currently, EtsyTrackr is only available for Windows. Support for other platforms may be added in the future.
+Currently, EtsyTrackr is available for Windows and macOS. Support for other platforms may be added in the future.
 
 ## Screenshots
 
@@ -108,6 +108,18 @@ The installer will:
 - Add a desktop shortcut (optional)
 - Handle automatic updates
 - Install all required dependencies
+
+### macOS Installation
+When running EtsyTrackr on macOS for the first time, you might see a security warning because the app is not signed with an Apple Developer Certificate. To run the app:
+
+1. Mount the DMG file by double-clicking it
+2. Drag EtsyTrackr to your Applications folder
+3. In the Applications folder, right-click (or Control-click) on EtsyTrackr
+4. Select "Open" from the context menu
+5. Click "Open" in the security dialog that appears
+6. The app will now open and remember your choice for future launches
+
+Note: This warning only appears the first time you run the app. Future launches can be done normally by clicking the app icon.
 
 ### Portable Version
 If you prefer not to use the installer, you can also download the portable version:
