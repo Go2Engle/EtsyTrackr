@@ -23,8 +23,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Build executables
-        run: python build.py
+      - name: Build Directory Version
+        run: python build.py --mode dir
+
+      - name: Build Single-File Version
+        run: python build.py --mode onefile
 
       - name: Create Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
@@ -35,6 +38,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/onefile/EtsyTrackr.exe
+
+      - name: Upload Directory Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/dir/EtsyTrackr
 
       - name: Upload Installer Release Asset
         uses: softprops/action-gh-release@v2

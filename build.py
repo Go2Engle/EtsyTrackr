@@ -154,12 +154,7 @@ def create_mac_plist(plist_path, bundle_name, version, icon_name):
     return plist_path
 
 def build_executable(onefile=True):
-    """Build the executable for the current platform
-    Args:
-        onefile (bool): If True, builds a single file executable. If False, builds a directory.
-    Returns:
-        dict: Dictionary containing paths and names of the built executable
-    """
+    """Build the executable for the current platform"""
     # Clean build directory but preserve dist structure
     if os.path.exists('build'):
         shutil.rmtree('build')
@@ -206,18 +201,6 @@ def build_executable(onefile=True):
                 if not onefile:
                     plist_path = os.path.join(current_dir, 'Info.plist')
                     create_mac_plist(plist_path, base_name, version, 'icon.icns')
-                    command = [
-                        os.path.join(current_dir, 'main.py'),
-                        '--windowed',
-                        '--workpath=build',
-                        '--specpath=build',
-                        f'--name={base_name}',
-                        f'--distpath={os.path.join(current_dir, "dist", "dir")}',
-                        f'--add-data={modules_path}{sep}modules',
-                        f'--add-data={assets_path}{sep}assets',
-                        '--osx-bundle-identifier=com.go2engle.etsytrackr',
-                        f'--plist={plist_path}'
-                    ]
             except Exception as e:
                 print(f"Warning: Could not process icon for macOS: {e}")
     else:  # Linux
@@ -226,47 +209,50 @@ def build_executable(onefile=True):
         sep = ':'
     
     # Set output directory based on mode
-    output_dir = os.path.join(current_dir, 'dist', 'onefile' if onefile else 'dir')
+    output_dir = os.path.join(current_dir, 'dist', 'dir')  # Always build to dir first
     
     # Base PyInstaller command
-    if sys.platform.startswith('darwin') and not onefile:
-        command = [
-            os.path.join(current_dir, 'main.py'),
-            '--windowed',
-            '--workpath=build',
-            '--specpath=build',
-            f'--name={base_name}',
-            f'--distpath={os.path.join(current_dir, "dist", "dir")}',
-            f'--add-data={modules_path}{sep}modules',
-            f'--add-data={assets_path}{sep}assets',
-            '--osx-bundle-identifier=com.go2engle.etsytrackr',
-            f'--plist={os.path.join(current_dir, "Info.plist")}'
-        ]
-    else:
-        command = [
-            os.path.join(current_dir, 'main.py'),
-            '--windowed',
-            '--workpath=build',
-            '--specpath=build',
-            f'--name={base_name}',
-            f'--distpath={output_dir}',
-            f'--add-data={modules_path}{sep}modules',
-            f'--add-data={assets_path}{sep}assets'
-        ]
+    command = [
+        os.path.join(current_dir, 'main.py'),
+        '--windowed',
+        '--workpath=build',
+        '--specpath=build',
+        f'--name={base_name}',
+        f'--distpath={output_dir}',
+        f'--add-data={modules_path}{sep}modules',
+        f'--add-data={assets_path}{sep}assets'
+    ]
     
-    # Add onefile flag if specified
-    if onefile:
-        command.append('--onefile')
+    # Add platform-specific options
+    if sys.platform.startswith('darwin') and not onefile:
+        command.extend([
+            '--osx-bundle-identifier=com.go2engle.etsytrackr'
+        ])
+        if os.path.exists(os.path.join(current_dir, 'Info.plist')):
+            command.append(f'--osx-info-plist={os.path.join(current_dir, "Info.plist")}')
     
     # Add icon if available
     if icon_path:
         print(f"Using icon: {icon_path}")
         command.append(f'--icon={icon_path}')
     
+    # Add onefile flag if specified
+    if onefile:
+        command.append('--onefile')
+    
     try:
         print("Starting PyInstaller build with command:", ' '.join(command))
         PyInstaller.__main__.run(command)
         print(f"Build completed! Output in {output_dir}")
+        
+        # For Windows onefile builds, copy to onefile directory
+        if sys.platform.startswith('win') and onefile:
+            onefile_dir = os.path.join(current_dir, 'dist', 'onefile')
+            os.makedirs(onefile_dir, exist_ok=True)
+            src = os.path.join(output_dir, exe_name)
+            dst = os.path.join(onefile_dir, exe_name)
+            if os.path.exists(src):
+                shutil.copy2(src, dst)
         
         # Return the paths for any platform
         result = {
@@ -464,7 +450,6 @@ def build_appimage(pyinstaller_dir):
     print("AppImage created successfully!")
 
 if __name__ == '__main__':
-    import argparse
     parser = argparse.ArgumentParser(description='Build EtsyTrackr executable')
     parser.add_argument('--mode', choices=['onefile', 'dir', 'appimage', 'dmg'], default='onefile',
                       help='Build mode: onefile=single executable, dir=directory with dependencies, '
@@ -475,17 +460,20 @@ if __name__ == '__main__':
     clean_dist()
     
     if args.mode == 'appimage':
-        if not sys.platform.startswith('linux'):
-            print("AppImage can only be built on Linux")
-            sys.exit(1)
         print("Building directory version for AppImage...")
         dir_info = build_executable(onefile=False)
+        print("Creating AppImage...")
         build_appimage(dir_info['dist_dir'])
     elif args.mode == 'dmg' and sys.platform == 'darwin':
-        # Build directory version first (creates .app bundle)
-        build_result = build_executable(onefile=False)
-        # Then create DMG
-        build_dmg(os.path.join(build_result['dist_dir'], f'{build_result["base_name"]}.app'))
+        print("Building directory version for DMG...")
+        dir_info = build_executable(onefile=False)
+        # DMG is created automatically in build_executable for macOS
+    elif args.mode == 'dir':
+        print("Building directory version...")
+        build_executable(onefile=False)
+    elif args.mode == 'onefile':
+        print("Building single-file version...")
+        build_executable(onefile=True)
     else:
-        # Regular build
-        build_executable(onefile=(args.mode == 'onefile'))
+        print(f"Error: Mode {args.mode} not supported on this platform")
+        sys.exit(1)
