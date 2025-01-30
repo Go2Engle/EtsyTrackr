@@ -23,6 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          python -m pip install --upgrade pyinstaller
           pip install -r requirements.txt
           brew install create-dmg
 
@@ -34,18 +35,37 @@ jobs:
           sudo rm -rf /usr/share/swift
           brew cleanup
 
-      - name: Build DMG with debug
+      - name: Show environment info
         run: |
-          python -m pip install --upgrade pyinstaller
-          python build.py --mode dmg --debug
+          python --version
+          pip list
+          pyinstaller --version
+          ls -la
+          pwd
 
-      - name: Upload build logs
+      - name: Build DMG
+        run: |
+          # Build with verbose output
+          python build.py --mode dmg
+          
+          # Show build artifacts
+          echo "Contents of dist directory:"
+          ls -R dist/
+          
+          if [ -d "dist/dir/EtsyTrackr.app" ]; then
+            echo "App bundle structure:"
+            ls -R dist/dir/EtsyTrackr.app/
+          fi
+
+      - name: Upload build artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs
+          name: build-artifacts
           path: |
             build/*.log
             build/*.txt
+            dist/**/*
             *.log
             *.txt
+            Info.plist

@@ -154,46 +154,65 @@ Keywords=etsy;shop;tracking;finance;inventory;"""
 
 def build_dmg(app_path):
     """Build DMG for macOS"""
-    print("Creating DMG...")
+    print("Building DMG...")
     
     try:
-        # Create a temporary directory for DMG contents
-        temp_dir = os.path.join('dist', 'dmg_temp')
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
-        os.makedirs(temp_dir)
+        # First build the .app
+        print("Building macOS app bundle...")
+        result = build_executable(onefile=False)
         
-        # Copy the .app bundle to the temporary directory
-        app_name = os.path.basename(app_path)
-        shutil.copytree(app_path, os.path.join(temp_dir, app_name))
+        if not result:
+            print("Error: Failed to build macOS app bundle")
+            return False
+            
+        app_path = os.path.join(result['dist_dir'], f"{result['base_name']}.app")
+        if not os.path.exists(app_path):
+            print(f"Error: App bundle not found at {app_path}")
+            return False
+            
+        print(f"App bundle created at: {app_path}")
+        print("App bundle contents:")
+        os.system(f"ls -R {app_path}")
         
-        # Create Applications symlink
-        os.symlink('/Applications', os.path.join(temp_dir, 'Applications'))
+        # Create DMG
+        print("\nCreating DMG...")
+        dmg_path = os.path.join(os.path.dirname(result['dist_dir']), f"{result['base_name']}.dmg")
         
-        # Output DMG path
-        dmg_path = os.path.join('dist', 'EtsyTrackr.dmg')
+        # Remove existing DMG
         if os.path.exists(dmg_path):
+            print(f"Removing existing DMG: {dmg_path}")
             os.remove(dmg_path)
         
-        # Use create-dmg to generate the DMG
-        subprocess.run([
+        # Create DMG using create-dmg
+        cmd = [
             'create-dmg',
-            '--volname', 'EtsyTrackr',
+            '--volname', result['base_name'],
+            '--volicon', os.path.join('assets', 'icon.icns'),
             '--window-pos', '200', '120',
-            '--window-size', '600', '300',
+            '--window-size', '800', '400',
             '--icon-size', '100',
-            '--icon', app_name, '175', '120',
-            '--hide-extension', app_name,
-            '--app-drop-link', '425', '120',
+            '--icon', f"{result['base_name']}.app", '200', '200',
+            '--hide-extension', f"{result['base_name']}.app",
+            '--app-drop-link', '600', '200',
             dmg_path,
-            temp_dir
-        ], check=True)
+            app_path
+        ]
         
-        print(f"DMG created successfully at: {dmg_path}")
-        return dmg_path
+        print("Running create-dmg command:", ' '.join(cmd))
+        subprocess.run(cmd, check=True)
+        
+        if os.path.exists(dmg_path):
+            print(f"Successfully created DMG at: {dmg_path}")
+            return True
+        else:
+            print(f"Error: DMG not found at expected path: {dmg_path}")
+            return False
+            
     except Exception as e:
-        print(f"Error creating DMG: {e}")
-        return None
+        print(f"Error creating DMG: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 def build_executable(onefile=True):
     """Build the executable for the current platform
