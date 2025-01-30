@@ -17,7 +17,15 @@ A desktop application to help Etsy sellers track their business finances, includ
 
 ## Platform Support
 
-Currently, EtsyTrackr is available for Windows and macOS. Support for other platforms may be added in the future.
+EtsyTrackr is available for multiple platforms with the following support:
+
+| Platform | Status | Download Type | Notes |
+|----------|--------|---------------|--------|
+| Windows | ✅ Working | `.exe` (portable)<br>`.exe` (installer) | Full support with both portable and installer versions |
+| macOS | ✅ Working | `.dmg` | Requires right-click to open on first launch |
+| Linux | ✅ Working | `.AppImage` | Self-contained executable that works on most distributions |
+
+All platform builds are automatically generated and tested with each release. Download the appropriate version for your platform from the [Releases](https://github.com/Go2Engle/EtsyTrackr/releases) page.
 
 ## Screenshots
 
