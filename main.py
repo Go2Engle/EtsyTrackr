@@ -110,10 +110,12 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.main_content)
 
 def main():
-    # Force the use of X11 backend instead of Wayland
-    os.environ["QT_QPA_PLATFORM"] = "xcb"
-    # Ensure proper integration with the system theme
-    os.environ["QT_QPA_PLATFORMTHEME"] = "gtk3"
+    # Set platform-specific Qt environment variables
+    if sys.platform.startswith('linux'):
+        # Force the use of X11 backend instead of Wayland on Linux
+        os.environ["QT_QPA_PLATFORM"] = "xcb"
+        # Ensure proper integration with the system theme on Linux
+        os.environ["QT_QPA_PLATFORMTHEME"] = "gtk3"
     
     app = QApplication(sys.argv)
     window = MainWindow()
