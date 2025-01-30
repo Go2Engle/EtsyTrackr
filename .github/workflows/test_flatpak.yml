@@ -1,0 +1,49 @@
+name: Test Flatpak Build
+
+on:
+  push:
+    branches:
+      - flatpak
+    paths:
+      - 'flatpak/**'
+      - 'build_flatpak.py'
+      - '.github/workflows/test_flatpak.yml'
+
+jobs:
+  build-flatpak:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11.8
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk python3-dev flatpak flatpak-builder imagemagick
+
+      - name: Setup Flatpak environment
+        run: |
+          sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          sudo flatpak install -y flathub org.freedesktop.Platform//23.08 org.freedesktop.Sdk//23.08
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build executable
+        run: python build.py
+
+      - name: Build Flatpak
+        run: python build_flatpak.py
+
+      - name: Upload Flatpak artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EtsyTrackr-Flatpak
+          path: dist/flatpak/EtsyTrackr.flatpak
+          retention-days: 5

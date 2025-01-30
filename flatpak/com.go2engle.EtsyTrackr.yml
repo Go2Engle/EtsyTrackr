@@ -1,0 +1,28 @@
+app-id: com.go2engle.EtsyTrackr
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+command: EtsyTrackr
+finish-args:
+  - --share=network
+  - --share=ipc
+  - --socket=x11
+  - --socket=wayland
+  - --filesystem=home
+modules:
+  - name: etsytrackr
+    buildsystem: simple
+    build-commands:
+      - install -D EtsyTrackr /app/bin/EtsyTrackr
+      - install -D com.go2engle.EtsyTrackr.desktop /app/share/applications/com.go2engle.EtsyTrackr.desktop
+      - install -D com.go2engle.EtsyTrackr.metainfo.xml /app/share/metainfo/com.go2engle.EtsyTrackr.metainfo.xml
+      - install -D icon.png /app/share/icons/hicolor/256x256/apps/com.go2engle.EtsyTrackr.png
+    sources:
+      - type: file
+        path: ../dist/onefile/EtsyTrackr
+      - type: file
+        path: com.go2engle.EtsyTrackr.desktop
+      - type: file
+        path: com.go2engle.EtsyTrackr.metainfo.xml
+      - type: file
+        path: icon.png

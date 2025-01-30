@@ -42,3 +42,9 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
+
+# Flatpak
+flatpak/build-dir/
+flatpak/repo/
+flatpak/.flatpak-builder/
+flatpak/icon.png
