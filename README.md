@@ -116,7 +116,13 @@ The installer will:
 - Add a desktop shortcut (optional)
 - Handle automatic updates
 - Install all required dependencies
-
+- 
+### Portable Version
+If you prefer not to use the installer, you can also download the portable version:
+1. Download `EtsyTrackr.exe` from the [Releases](https://github.com/Go2Engle/EtsyTrackr/releases) page
+2. Run the executable from any location
+3. Note: The portable version will still check for updates but won't install them automatically
+4. 
 ### macOS Installation
 When running EtsyTrackr on macOS for the first time, you might see a security warning because the app is not signed with an Apple Developer Certificate. To run the app:
 
@@ -128,12 +134,6 @@ When running EtsyTrackr on macOS for the first time, you might see a security wa
 6. The app will now open and remember your choice for future launches
 
 Note: This warning only appears the first time you run the app. Future launches can be done normally by clicking the app icon.
-
-### Portable Version
-If you prefer not to use the installer, you can also download the portable version:
-1. Download `EtsyTrackr.exe` from the [Releases](https://github.com/Go2Engle/EtsyTrackr/releases) page
-2. Run the executable from any location
-3. Note: The portable version will still check for updates but won't install them automatically
 
 ## Getting Started
 
