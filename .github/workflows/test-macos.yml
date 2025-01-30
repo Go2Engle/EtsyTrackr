@@ -65,3 +65,11 @@ jobs:
           else
             echo "DMG file not found!"
           fi
+
+      - name: Upload DMG
+        if: success() && hashFiles('dist/EtsyTrackr.dmg') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: EtsyTrackr-macOS
+          path: dist/EtsyTrackr.dmg
+          retention-days: 5
