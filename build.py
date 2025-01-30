@@ -152,31 +152,24 @@ Keywords=etsy;shop;tracking;finance;inventory;"""
         f.write(desktop_content)
     return desktop_path
 
-def build_dmg(app_path):
+def build_dmg():
     """Build DMG for macOS"""
     print("Building DMG...")
     
     try:
-        # First build the .app
-        print("Building macOS app bundle...")
-        result = build_executable(onefile=False)
-        
-        if not result:
-            print("Error: Failed to build macOS app bundle")
-            return False
-            
-        app_path = os.path.join(result['dist_dir'], f"{result['base_name']}.app")
+        # Get the app path from the dist directory
+        app_path = os.path.join('dist', 'dir', 'EtsyTrackr.app')
         if not os.path.exists(app_path):
             print(f"Error: App bundle not found at {app_path}")
             return False
             
-        print(f"App bundle created at: {app_path}")
+        print(f"Found app bundle at: {app_path}")
         print("App bundle contents:")
         os.system(f"ls -R {app_path}")
         
         # Create DMG
         print("\nCreating DMG...")
-        dmg_path = os.path.join(os.path.dirname(result['dist_dir']), f"{result['base_name']}.dmg")
+        dmg_path = os.path.join('dist', 'EtsyTrackr.dmg')
         
         # Remove existing DMG
         if os.path.exists(dmg_path):
@@ -186,13 +179,13 @@ def build_dmg(app_path):
         # Create DMG using create-dmg
         cmd = [
             'create-dmg',
-            '--volname', result['base_name'],
+            '--volname', 'EtsyTrackr',
             '--volicon', os.path.join('assets', 'icon.icns'),
             '--window-pos', '200', '120',
             '--window-size', '800', '400',
             '--icon-size', '100',
-            '--icon', f"{result['base_name']}.app", '200', '200',
-            '--hide-extension', f"{result['base_name']}.app",
+            '--icon', 'EtsyTrackr.app', '200', '200',
+            '--hide-extension', 'EtsyTrackr.app',
             '--app-drop-link', '600', '200',
             dmg_path,
             app_path
@@ -488,8 +481,7 @@ if __name__ == '__main__':
             print("DMG can only be built on macOS")
             sys.exit(1)
         print("Building DMG...")
-        dir_info = build_executable(onefile=False)
-        build_dmg(os.path.join(dir_info['dist_dir'], dir_info['exe_name'] + '.app'))
+        build_dmg()
     else:
         # Build both versions
         print("Building single-file version...")

@@ -43,10 +43,10 @@ jobs:
           ls -la
           pwd
 
-      - name: Build DMG
+      - name: Build App Bundle
         run: |
-          # Build with verbose output
-          python build.py --mode dmg
+          # Build the .app bundle first
+          python build.py --mode dir
           
           # Show build artifacts
           echo "Contents of dist directory:"
@@ -57,15 +57,11 @@ jobs:
             ls -R dist/dir/EtsyTrackr.app/
           fi
 
-      - name: Upload build artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: |
-            build/*.log
-            build/*.txt
-            dist/**/*
-            *.log
-            *.txt
-            Info.plist
+      - name: Build DMG
+        run: |
+          # Now create the DMG
+          python build.py --mode dmg
+          
+          # Show final artifacts
+          echo "Final dist contents:"
+          ls -la dist/
