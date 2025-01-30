@@ -6,7 +6,7 @@ import sys
 class VersionChecker:
     GITHUB_API_URL = "https://api.github.com/repos/go2engle/EtsyTrackr/releases/latest"
     GITHUB_RELEASES_URL = "https://github.com/go2engle/EtsyTrackr/releases/latest"
-    CURRENT_VERSION = "v0.5.0"  # This should match your current version
+    CURRENT_VERSION = "v0.6.0"  # This should match your current version
 
     @classmethod
     def check_for_updates(cls):
