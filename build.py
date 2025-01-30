@@ -6,6 +6,7 @@ from pathlib import Path
 import argparse
 import subprocess
 import stat
+from modules.version import VersionChecker
 
 def clean_dist():
     """Clean dist and build directories"""
@@ -16,6 +17,7 @@ def clean_dist():
     os.makedirs('dist/onefile', exist_ok=True)
     os.makedirs('dist/dir', exist_ok=True)
     os.makedirs('dist/appimage', exist_ok=True)
+    os.makedirs('dist/dmg', exist_ok=True)
 
 def convert_to_ico(png_path, ico_path):
     """Convert PNG to ICO with multiple sizes"""
@@ -56,6 +58,101 @@ Keywords=etsy;shop;tracking;finance;inventory;"""
         f.write(desktop_content)
     return desktop_path
 
+def create_icns(png_path, output_path):
+    """Create ICNS file for macOS from PNG"""
+    print("Creating ICNS file...")
+    try:
+        from PIL import Image
+        import tempfile
+        
+        # Create temporary directory for iconset
+        with tempfile.TemporaryDirectory() as iconset:
+            # Define icon sizes for macOS
+            icon_sizes = [
+                (16, '16x16'), (32, '16x16@2x'),
+                (32, '32x32'), (64, '32x32@2x'),
+                (128, '128x128'), (256, '128x128@2x'),
+                (256, '256x256'), (512, '256x256@2x'),
+                (512, '512x512'), (1024, '512x512@2x')
+            ]
+            
+            # Open and convert source image
+            img = Image.open(png_path)
+            if img.mode != 'RGBA':
+                img = img.convert('RGBA')
+            
+            # Create each size and save to iconset
+            for size, name in icon_sizes:
+                scaled_img = img.copy()
+                scaled_img.thumbnail((size, size), Image.Resampling.LANCZOS)
+                
+                # Ensure icon is square with transparent background
+                icon = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+                paste_x = (size - scaled_img.width) // 2
+                paste_y = (size - scaled_img.height) // 2
+                icon.paste(scaled_img, (paste_x, paste_y))
+                
+                icon_path = os.path.join(iconset, f'icon_{name}.png')
+                icon.save(icon_path)
+            
+            # Use iconutil to create ICNS (macOS only)
+            if sys.platform == 'darwin':
+                iconset_path = os.path.join(iconset, 'icon.iconset')
+                os.makedirs(iconset_path, exist_ok=True)
+                
+                # Move files to .iconset directory with macOS naming
+                for size, name in icon_sizes:
+                    src = os.path.join(iconset, f'icon_{name}.png')
+                    dst = os.path.join(iconset_path, f'icon_{name}.png')
+                    shutil.move(src, dst)
+                
+                # Convert to ICNS using iconutil
+                subprocess.run(['iconutil', '-c', 'icns', iconset_path, '-o', output_path], check=True)
+                print(f"Successfully created ICNS file at: {output_path}")
+                return output_path
+    except Exception as e:
+        print(f"Warning: Could not create ICNS file: {e}")
+        return None
+
+def create_mac_plist(plist_path, bundle_name, version, icon_name):
+    """Create Info.plist file for macOS app bundle"""
+    plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>English</string>
+    <key>CFBundleDisplayName</key>
+    <string>{bundle_name}</string>
+    <key>CFBundleExecutable</key>
+    <string>{bundle_name}</string>
+    <key>CFBundleIconFile</key>
+    <string>{icon_name}</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.go2engle.etsytrackr</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>{bundle_name}</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>{version}</string>
+    <key>CFBundleVersion</key>
+    <string>{version}</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.13.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSRequiresAquaSystemAppearance</key>
+    <false/>
+</dict>
+</plist>"""
+    
+    with open(plist_path, 'w', encoding='utf-8') as f:
+        f.write(plist_content)
+    return plist_path
+
 def build_executable(onefile=True):
     """Build the executable for the current platform
     Args:
@@ -72,8 +169,10 @@ def build_executable(onefile=True):
     modules_path = os.path.join(current_dir, 'modules')
     assets_path = os.path.join(current_dir, 'assets')
     
-    # Get icon path
+    # Get icon path and version from VersionChecker
     icon_path = os.path.join(assets_path, 'icon.png')
+    version = VersionChecker.CURRENT_VERSION.lstrip('v')  # Remove 'v' prefix for build metadata
+    
     if not os.path.exists(icon_path):
         print(f"Warning: Icon not found at {icon_path}")
         icon_path = None
@@ -99,15 +198,26 @@ def build_executable(onefile=True):
         sep = ':'
         if icon_path:
             try:
-                from PIL import Image
-                im = Image.open(icon_path)
-                # Ensure icon is square
-                size = max(im.size)
-                new_im = Image.new('RGBA', (size, size), (0, 0, 0, 0))
-                new_im.paste(im, ((size - im.size[0]) // 2, (size - im.size[1]) // 2))
-                # Save as PNG for macOS app bundle
-                new_im.save(os.path.join(assets_path, 'icon_mac.png'))
-                icon_path = os.path.join(assets_path, 'icon_mac.png')
+                # Create ICNS file for macOS
+                icns_path = os.path.join(assets_path, 'icon.icns')
+                icon_path = create_icns(icon_path, icns_path)
+                
+                # Create Info.plist template
+                if not onefile:
+                    plist_path = os.path.join(current_dir, 'Info.plist')
+                    create_mac_plist(plist_path, base_name, version, 'icon.icns')
+                    command = [
+                        os.path.join(current_dir, 'main.py'),
+                        '--windowed',
+                        '--workpath=build',
+                        '--specpath=build',
+                        f'--name={base_name}',
+                        f'--distpath={os.path.join(current_dir, "dist", "dir")}',
+                        f'--add-data={modules_path}{sep}modules',
+                        f'--add-data={assets_path}{sep}assets',
+                        '--osx-bundle-identifier=com.go2engle.etsytrackr',
+                        f'--plist={plist_path}'
+                    ]
             except Exception as e:
                 print(f"Warning: Could not process icon for macOS: {e}")
     else:  # Linux
@@ -119,16 +229,30 @@ def build_executable(onefile=True):
     output_dir = os.path.join(current_dir, 'dist', 'onefile' if onefile else 'dir')
     
     # Base PyInstaller command
-    command = [
-        os.path.join(current_dir, 'main.py'),
-        '--windowed',
-        '--workpath=build',
-        '--specpath=build',
-        f'--name={base_name}',
-        f'--distpath={output_dir}',
-        f'--add-data={modules_path}{sep}modules',
-        f'--add-data={assets_path}{sep}assets'
-    ]
+    if sys.platform.startswith('darwin') and not onefile:
+        command = [
+            os.path.join(current_dir, 'main.py'),
+            '--windowed',
+            '--workpath=build',
+            '--specpath=build',
+            f'--name={base_name}',
+            f'--distpath={os.path.join(current_dir, "dist", "dir")}',
+            f'--add-data={modules_path}{sep}modules',
+            f'--add-data={assets_path}{sep}assets',
+            '--osx-bundle-identifier=com.go2engle.etsytrackr',
+            f'--plist={os.path.join(current_dir, "Info.plist")}'
+        ]
+    else:
+        command = [
+            os.path.join(current_dir, 'main.py'),
+            '--windowed',
+            '--workpath=build',
+            '--specpath=build',
+            f'--name={base_name}',
+            f'--distpath={output_dir}',
+            f'--add-data={modules_path}{sep}modules',
+            f'--add-data={assets_path}{sep}assets'
+        ]
     
     # Add onefile flag if specified
     if onefile:
@@ -145,15 +269,78 @@ def build_executable(onefile=True):
         print(f"Build completed! Output in {output_dir}")
         
         # Return the paths for any platform
-        return {
+        result = {
             'exe_path': os.path.join(output_dir, exe_name),
             'dist_dir': output_dir,
             'exe_name': exe_name,
             'base_name': base_name
         }
+        
+        # For macOS, create DMG if on macOS
+        if sys.platform == 'darwin' and not onefile:
+            dmg_path = build_dmg(os.path.join(output_dir, f'{base_name}.app'))
+            if dmg_path:
+                result['dmg_path'] = dmg_path
+        
+        return result
     except Exception as e:
         print(f"Error during build: {str(e)}")
         sys.exit(1)
+
+def build_dmg(app_path):
+    """Build DMG for macOS"""
+    print("Creating DMG...")
+    
+    # Create DMG directory
+    dmg_dir = os.path.join('dist', 'dmg')
+    if not os.path.exists(dmg_dir):
+        os.makedirs(dmg_dir)
+    
+    # Copy .app bundle to DMG directory
+    app_name = os.path.basename(app_path)
+    dmg_app_path = os.path.join(dmg_dir, app_name)
+    if os.path.exists(dmg_app_path):
+        shutil.rmtree(dmg_app_path)
+    shutil.copytree(app_path, dmg_app_path)
+    
+    # Create a symbolic link to /Applications
+    applications_link = os.path.join(dmg_dir, 'Applications')
+    if not os.path.exists(applications_link):
+        os.symlink('/Applications', applications_link)
+    
+    # Create DMG using hdiutil
+    dmg_path = os.path.join('dist', 'EtsyTrackr.dmg')
+    if os.path.exists(dmg_path):
+        os.remove(dmg_path)
+    
+    try:
+        # Create temporary DMG
+        subprocess.run([
+            'hdiutil', 'create',
+            '-srcfolder', dmg_dir,
+            '-volname', 'EtsyTrackr',
+            '-fs', 'HFS+',
+            '-fsargs', '-c c=64,a=16,e=16',
+            '-format', 'UDRW',
+            '-size', '256m',
+            os.path.join('dist', 'temp.dmg')
+        ], check=True)
+        
+        # Convert temporary DMG to compressed final DMG
+        subprocess.run([
+            'hdiutil', 'convert',
+            os.path.join('dist', 'temp.dmg'),
+            '-format', 'UDZO',
+            '-o', dmg_path
+        ], check=True)
+        
+        # Clean up temporary DMG
+        os.remove(os.path.join('dist', 'temp.dmg'))
+        print(f"DMG created successfully at: {dmg_path}")
+        return dmg_path
+    except subprocess.CalledProcessError as e:
+        print(f"Error creating DMG: {e}")
+        return None
 
 def build_appimage(pyinstaller_dir):
     """Build AppImage from PyInstaller directory"""
@@ -279,8 +466,9 @@ def build_appimage(pyinstaller_dir):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Build EtsyTrackr executable')
-    parser.add_argument('--mode', choices=['onefile', 'dir', 'appimage'], default='onefile',
-                       help='Build mode: onefile for single executable, dir for directory mode, appimage for Linux AppImage')
+    parser.add_argument('--mode', choices=['onefile', 'dir', 'appimage', 'dmg'], default='onefile',
+                      help='Build mode: onefile=single executable, dir=directory with dependencies, '
+                           'appimage=Linux AppImage, dmg=macOS DMG')
     args = parser.parse_args()
     
     # Clean dist directory once at the start
@@ -293,9 +481,11 @@ if __name__ == '__main__':
         print("Building directory version for AppImage...")
         dir_info = build_executable(onefile=False)
         build_appimage(dir_info['dist_dir'])
+    elif args.mode == 'dmg' and sys.platform == 'darwin':
+        # Build directory version first (creates .app bundle)
+        build_result = build_executable(onefile=False)
+        # Then create DMG
+        build_dmg(os.path.join(build_result['dist_dir'], f'{build_result["base_name"]}.app'))
     else:
-        # Build both versions
-        print("Building single-file version...")
-        onefile_info = build_executable(onefile=True)
-        print("\nBuilding directory version...")
-        dir_info = build_executable(onefile=False)
+        # Regular build
+        build_executable(onefile=(args.mode == 'onefile'))
