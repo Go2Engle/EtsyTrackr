@@ -43,12 +43,14 @@ jobs:
           ls -la
           pwd
 
-      - name: Build App Bundle
+      - name: Build DMG
         run: |
-          # Build the .app bundle first
-          python build.py --mode dir
+          # Build DMG (this will build the app bundle first)
+          python build.py --mode dmg
           
-          # Show build artifacts
+          echo "Contents of build directory:"
+          ls -R build/
+          
           echo "Contents of dist directory:"
           ls -R dist/
           
@@ -56,12 +58,10 @@ jobs:
             echo "App bundle structure:"
             ls -R dist/dir/EtsyTrackr.app/
           fi
-
-      - name: Build DMG
-        run: |
-          # Now create the DMG
-          python build.py --mode dmg
           
-          # Show final artifacts
-          echo "Final dist contents:"
-          ls -la dist/
+          if [ -f "dist/EtsyTrackr.dmg" ]; then
+            echo "DMG file created successfully"
+            ls -l dist/EtsyTrackr.dmg
+          else
+            echo "DMG file not found!"
+          fi

@@ -157,8 +157,14 @@ def build_dmg():
     print("Building DMG...")
     
     try:
-        # Get the app path from the dist directory
-        app_path = os.path.join('dist', 'dir', 'EtsyTrackr.app')
+        # First build the app bundle
+        print("Building app bundle...")
+        result = build_executable(onefile=False)
+        if not result:
+            print("Error: Failed to build app bundle")
+            return False
+            
+        app_path = os.path.join(result['dist_dir'], f"{result['base_name']}.app")
         if not os.path.exists(app_path):
             print(f"Error: App bundle not found at {app_path}")
             return False
@@ -480,7 +486,6 @@ if __name__ == '__main__':
         if not sys.platform.startswith('darwin'):
             print("DMG can only be built on macOS")
             sys.exit(1)
-        print("Building DMG...")
         build_dmg()
     else:
         # Build both versions
