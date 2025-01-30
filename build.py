@@ -152,48 +152,84 @@ Keywords=etsy;shop;tracking;finance;inventory;"""
         f.write(desktop_content)
     return desktop_path
 
-def build_dmg(app_path):
+def sign_mac_app(app_path):
+    """Sign the macOS app bundle with ad-hoc signature"""
+    try:
+        print("Signing app bundle...")
+        # Create an ad-hoc signature
+        cmd = ['codesign', '--force', '--deep', '--sign', '-', app_path]
+        subprocess.run(cmd, check=True)
+        print(f"Successfully signed app bundle at: {app_path}")
+        return True
+    except Exception as e:
+        print(f"Warning: Could not sign app bundle: {e}")
+        return False
+
+def build_dmg():
     """Build DMG for macOS"""
-    print("Creating DMG...")
+    print("Building DMG...")
     
     try:
-        # Create a temporary directory for DMG contents
-        temp_dir = os.path.join('dist', 'dmg_temp')
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
-        os.makedirs(temp_dir)
+        # First build the app bundle
+        print("Building app bundle...")
+        result = build_executable(onefile=False)
+        if not result:
+            print("Error: Failed to build app bundle")
+            return False
+            
+        app_path = os.path.join(result['dist_dir'], f"{result['base_name']}.app")
+        if not os.path.exists(app_path):
+            print(f"Error: App bundle not found at {app_path}")
+            return False
+            
+        # Sign the app bundle
+        sign_mac_app(app_path)
+            
+        print(f"Found app bundle at: {app_path}")
+        print("App bundle contents:")
+        os.system(f"ls -R {app_path}")
         
-        # Copy the .app bundle to the temporary directory
-        app_name = os.path.basename(app_path)
-        shutil.copytree(app_path, os.path.join(temp_dir, app_name))
+        # Create DMG
+        print("\nCreating DMG...")
+        dmg_dir = os.path.join('dist', 'dmg')
+        os.makedirs(dmg_dir, exist_ok=True)
+        dmg_path = os.path.join(dmg_dir, 'EtsyTrackr.dmg')
         
-        # Create Applications symlink
-        os.symlink('/Applications', os.path.join(temp_dir, 'Applications'))
-        
-        # Output DMG path
-        dmg_path = os.path.join('dist', 'EtsyTrackr.dmg')
+        # Remove existing DMG
         if os.path.exists(dmg_path):
+            print(f"Removing existing DMG: {dmg_path}")
             os.remove(dmg_path)
         
-        # Use create-dmg to generate the DMG
-        subprocess.run([
+        # Create DMG using create-dmg
+        cmd = [
             'create-dmg',
             '--volname', 'EtsyTrackr',
+            '--volicon', os.path.join('assets', 'icon.icns'),
             '--window-pos', '200', '120',
-            '--window-size', '600', '300',
+            '--window-size', '800', '400',
             '--icon-size', '100',
-            '--icon', app_name, '175', '120',
-            '--hide-extension', app_name,
-            '--app-drop-link', '425', '120',
+            '--icon', 'EtsyTrackr.app', '200', '200',
+            '--hide-extension', 'EtsyTrackr.app',
+            '--app-drop-link', '600', '200',
             dmg_path,
-            temp_dir
-        ], check=True)
+            app_path
+        ]
         
-        print(f"DMG created successfully at: {dmg_path}")
-        return dmg_path
+        print("Running create-dmg command:", ' '.join(cmd))
+        subprocess.run(cmd, check=True)
+        
+        if os.path.exists(dmg_path):
+            print(f"Successfully created DMG at: {dmg_path}")
+            return True
+        else:
+            print(f"Error: DMG not found at expected path: {dmg_path}")
+            return False
+            
     except Exception as e:
-        print(f"Error creating DMG: {e}")
-        return None
+        print(f"Error creating DMG: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 def build_executable(onefile=True):
     """Build the executable for the current platform
@@ -211,9 +247,10 @@ def build_executable(onefile=True):
     modules_path = os.path.join(current_dir, 'modules')
     assets_path = os.path.join(current_dir, 'assets')
     
-    # Get icon path and version from VersionChecker
+    # Get icon path and version
+    from modules.version import VersionChecker
+    version = VersionChecker.CURRENT_VERSION.lstrip('v')
     icon_path = os.path.join(assets_path, 'icon.png')
-    version = "0.7.1"  # This should match your current version
     
     if not os.path.exists(icon_path):
         print(f"Warning: Icon not found at {icon_path}")
@@ -277,10 +314,6 @@ def build_executable(onefile=True):
         command.extend([
             '--osx-bundle-identifier=com.go2engle.etsytrackr'
         ])
-        # Add Info.plist if it exists
-        plist_path = os.path.join(current_dir, 'Info.plist')
-        if os.path.exists(plist_path):
-            command.append(f'--plist={plist_path}')
     
     # Add icon if available
     if icon_path:
@@ -300,14 +333,21 @@ def build_executable(onefile=True):
         if sys.platform == 'darwin' and not onefile:
             app_path = os.path.join(output_dir, f'{base_name}.app')
             if os.path.exists(app_path):
-                # Copy Info.plist to the app bundle if not already there
+                # Copy Info.plist to the app bundle
                 contents_path = os.path.join(app_path, 'Contents')
                 plist_path = os.path.join(current_dir, 'Info.plist')
                 if os.path.exists(plist_path):
                     dest_plist = os.path.join(contents_path, 'Info.plist')
-                    if not os.path.exists(dest_plist):
-                        shutil.copy2(plist_path, dest_plist)
-                        print(f"Copied Info.plist to app bundle at: {dest_plist}")
+                    shutil.copy2(plist_path, dest_plist)
+                    print(f"Copied Info.plist to app bundle at: {dest_plist}")
+                
+                # Copy icon to Resources
+                if icon_path and icon_path.endswith('.icns'):
+                    resources_path = os.path.join(contents_path, 'Resources')
+                    os.makedirs(resources_path, exist_ok=True)
+                    icon_dest = os.path.join(resources_path, 'icon.icns')
+                    shutil.copy2(icon_path, icon_dest)
+                    print(f"Copied icon to app bundle at: {icon_dest}")
         
         # Return the paths for any platform
         result = {
@@ -464,9 +504,7 @@ if __name__ == '__main__':
         if not sys.platform.startswith('darwin'):
             print("DMG can only be built on macOS")
             sys.exit(1)
-        print("Building DMG...")
-        dir_info = build_executable(onefile=False)
-        build_dmg(os.path.join(dir_info['dist_dir'], dir_info['exe_name'] + '.app'))
+        build_dmg()
     else:
         # Build both versions
         print("Building single-file version...")
