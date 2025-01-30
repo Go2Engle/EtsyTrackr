@@ -1,6 +1,7 @@
 import requests
 from packaging import version
 import webbrowser
+import sys
 
 class VersionChecker:
     GITHUB_API_URL = "https://api.github.com/repos/go2engle/EtsyTrackr/releases/latest"
@@ -20,7 +21,11 @@ class VersionChecker:
                 latest_version = release_data['tag_name']  # Already includes 'v' prefix
                 
                 # Check for platform-specific installer in assets
-                installer_name = "EtsyTrackr_Setup.exe"  # Windows installer
+                if sys.platform.startswith('linux'):
+                    installer_name = "EtsyTrackr-x86_64.AppImage"
+                else:
+                    installer_name = "EtsyTrackr_Setup.exe"  # Windows installer
+                
                 installer_exists = any(
                     asset['name'] == installer_name 
                     for asset in release_data.get('assets', [])
