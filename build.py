@@ -6,7 +6,6 @@ from pathlib import Path
 import argparse
 import subprocess
 import stat
-from modules.version import VersionChecker
 
 def clean_dist():
     """Clean dist and build directories"""
@@ -40,23 +39,6 @@ def convert_to_ico(png_path, ico_path):
     # Save as ICO with all sizes
     icon_sizes[0].save(ico_path, format='ICO', sizes=[(img.size[0], img.size[1]) for img in icon_sizes], append_images=icon_sizes[1:])
     return ico_path
-
-def create_desktop_file(output_dir):
-    """Create .desktop file for Linux"""
-    desktop_content = """[Desktop Entry]
-Name=EtsyTrackr
-Comment=Track and manage your Etsy shop finances and inventory
-Exec=etsytrackr
-Icon=etsytrackr
-Terminal=false
-Type=Application
-Categories=Office;Finance;
-Keywords=etsy;shop;tracking;finance;inventory;"""
-    
-    desktop_path = os.path.join(output_dir, 'etsytrackr.desktop')
-    with open(desktop_path, 'w') as f:
-        f.write(desktop_content)
-    return desktop_path
 
 def create_icns(png_path, output_path):
     """Create ICNS file for macOS from PNG"""
@@ -153,8 +135,73 @@ def create_mac_plist(plist_path, bundle_name, version, icon_name):
         f.write(plist_content)
     return plist_path
 
+def create_desktop_file(output_dir):
+    """Create .desktop file for Linux"""
+    desktop_content = """[Desktop Entry]
+Name=EtsyTrackr
+Comment=Track and manage your Etsy shop finances and inventory
+Exec=etsytrackr
+Icon=etsytrackr
+Terminal=false
+Type=Application
+Categories=Office;Finance;
+Keywords=etsy;shop;tracking;finance;inventory;"""
+    
+    desktop_path = os.path.join(output_dir, 'etsytrackr.desktop')
+    with open(desktop_path, 'w') as f:
+        f.write(desktop_content)
+    return desktop_path
+
+def build_dmg(app_path):
+    """Build DMG for macOS"""
+    print("Creating DMG...")
+    
+    try:
+        # Create a temporary directory for DMG contents
+        temp_dir = os.path.join('dist', 'dmg_temp')
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+        os.makedirs(temp_dir)
+        
+        # Copy the .app bundle to the temporary directory
+        app_name = os.path.basename(app_path)
+        shutil.copytree(app_path, os.path.join(temp_dir, app_name))
+        
+        # Create Applications symlink
+        os.symlink('/Applications', os.path.join(temp_dir, 'Applications'))
+        
+        # Output DMG path
+        dmg_path = os.path.join('dist', 'EtsyTrackr.dmg')
+        if os.path.exists(dmg_path):
+            os.remove(dmg_path)
+        
+        # Use create-dmg to generate the DMG
+        subprocess.run([
+            'create-dmg',
+            '--volname', 'EtsyTrackr',
+            '--window-pos', '200', '120',
+            '--window-size', '600', '300',
+            '--icon-size', '100',
+            '--icon', app_name, '175', '120',
+            '--hide-extension', app_name,
+            '--app-drop-link', '425', '120',
+            dmg_path,
+            temp_dir
+        ], check=True)
+        
+        print(f"DMG created successfully at: {dmg_path}")
+        return dmg_path
+    except Exception as e:
+        print(f"Error creating DMG: {e}")
+        return None
+
 def build_executable(onefile=True):
-    """Build the executable for the current platform"""
+    """Build the executable for the current platform
+    Args:
+        onefile (bool): If True, builds a single file executable. If False, builds a directory.
+    Returns:
+        dict: Dictionary containing paths and names of the built executable
+    """
     # Clean build directory but preserve dist structure
     if os.path.exists('build'):
         shutil.rmtree('build')
@@ -166,7 +213,7 @@ def build_executable(onefile=True):
     
     # Get icon path and version from VersionChecker
     icon_path = os.path.join(assets_path, 'icon.png')
-    version = VersionChecker.CURRENT_VERSION.lstrip('v')  # Remove 'v' prefix for build metadata
+    version = "0.7.1"  # This should match your current version
     
     if not os.path.exists(icon_path):
         print(f"Warning: Icon not found at {icon_path}")
@@ -196,11 +243,13 @@ def build_executable(onefile=True):
                 # Create ICNS file for macOS
                 icns_path = os.path.join(assets_path, 'icon.icns')
                 icon_path = create_icns(icon_path, icns_path)
+                print(f"Successfully created ICNS file at: {icon_path}")
                 
-                # Create Info.plist template
+                # Create Info.plist template if building directory
                 if not onefile:
                     plist_path = os.path.join(current_dir, 'Info.plist')
                     create_mac_plist(plist_path, base_name, version, 'icon.icns')
+                    print(f"Created Info.plist at: {plist_path}")
             except Exception as e:
                 print(f"Warning: Could not process icon for macOS: {e}")
     else:  # Linux
@@ -209,7 +258,7 @@ def build_executable(onefile=True):
         sep = ':'
     
     # Set output directory based on mode
-    output_dir = os.path.join(current_dir, 'dist', 'dir')  # Always build to dir first
+    output_dir = os.path.join(current_dir, 'dist', 'onefile' if onefile else 'dir')
     
     # Base PyInstaller command
     command = [
@@ -228,8 +277,10 @@ def build_executable(onefile=True):
         command.extend([
             '--osx-bundle-identifier=com.go2engle.etsytrackr'
         ])
-        if os.path.exists(os.path.join(current_dir, 'Info.plist')):
-            command.append(f'--osx-info-plist={os.path.join(current_dir, "Info.plist")}')
+        # Add Info.plist if it exists
+        plist_path = os.path.join(current_dir, 'Info.plist')
+        if os.path.exists(plist_path):
+            command.append(f'--plist={plist_path}')
     
     # Add icon if available
     if icon_path:
@@ -245,14 +296,18 @@ def build_executable(onefile=True):
         PyInstaller.__main__.run(command)
         print(f"Build completed! Output in {output_dir}")
         
-        # For Windows onefile builds, copy to onefile directory
-        if sys.platform.startswith('win') and onefile:
-            onefile_dir = os.path.join(current_dir, 'dist', 'onefile')
-            os.makedirs(onefile_dir, exist_ok=True)
-            src = os.path.join(output_dir, exe_name)
-            dst = os.path.join(onefile_dir, exe_name)
-            if os.path.exists(src):
-                shutil.copy2(src, dst)
+        # For macOS, handle Info.plist and app bundle
+        if sys.platform == 'darwin' and not onefile:
+            app_path = os.path.join(output_dir, f'{base_name}.app')
+            if os.path.exists(app_path):
+                # Copy Info.plist to the app bundle if not already there
+                contents_path = os.path.join(app_path, 'Contents')
+                plist_path = os.path.join(current_dir, 'Info.plist')
+                if os.path.exists(plist_path):
+                    dest_plist = os.path.join(contents_path, 'Info.plist')
+                    if not os.path.exists(dest_plist):
+                        shutil.copy2(plist_path, dest_plist)
+                        print(f"Copied Info.plist to app bundle at: {dest_plist}")
         
         # Return the paths for any platform
         result = {
@@ -262,71 +317,10 @@ def build_executable(onefile=True):
             'base_name': base_name
         }
         
-        # For macOS, create DMG if on macOS
-        if sys.platform == 'darwin' and not onefile:
-            dmg_path = build_dmg(os.path.join(output_dir, f'{base_name}.app'))
-            if dmg_path:
-                result['dmg_path'] = dmg_path
-        
         return result
     except Exception as e:
         print(f"Error during build: {str(e)}")
         sys.exit(1)
-
-def build_dmg(app_path):
-    """Build DMG for macOS"""
-    print("Creating DMG...")
-    
-    # Create DMG directory
-    dmg_dir = os.path.join('dist', 'dmg')
-    if not os.path.exists(dmg_dir):
-        os.makedirs(dmg_dir)
-    
-    # Copy .app bundle to DMG directory
-    app_name = os.path.basename(app_path)
-    dmg_app_path = os.path.join(dmg_dir, app_name)
-    if os.path.exists(dmg_app_path):
-        shutil.rmtree(dmg_app_path)
-    shutil.copytree(app_path, dmg_app_path)
-    
-    # Create a symbolic link to /Applications
-    applications_link = os.path.join(dmg_dir, 'Applications')
-    if not os.path.exists(applications_link):
-        os.symlink('/Applications', applications_link)
-    
-    # Create DMG using hdiutil
-    dmg_path = os.path.join('dist', 'EtsyTrackr.dmg')
-    if os.path.exists(dmg_path):
-        os.remove(dmg_path)
-    
-    try:
-        # Create temporary DMG
-        subprocess.run([
-            'hdiutil', 'create',
-            '-srcfolder', dmg_dir,
-            '-volname', 'EtsyTrackr',
-            '-fs', 'HFS+',
-            '-fsargs', '-c c=64,a=16,e=16',
-            '-format', 'UDRW',
-            '-size', '256m',
-            os.path.join('dist', 'temp.dmg')
-        ], check=True)
-        
-        # Convert temporary DMG to compressed final DMG
-        subprocess.run([
-            'hdiutil', 'convert',
-            os.path.join('dist', 'temp.dmg'),
-            '-format', 'UDZO',
-            '-o', dmg_path
-        ], check=True)
-        
-        # Clean up temporary DMG
-        os.remove(os.path.join('dist', 'temp.dmg'))
-        print(f"DMG created successfully at: {dmg_path}")
-        return dmg_path
-    except subprocess.CalledProcessError as e:
-        print(f"Error creating DMG: {e}")
-        return None
 
 def build_appimage(pyinstaller_dir):
     """Build AppImage from PyInstaller directory"""
@@ -450,30 +444,32 @@ def build_appimage(pyinstaller_dir):
     print("AppImage created successfully!")
 
 if __name__ == '__main__':
+    import argparse
     parser = argparse.ArgumentParser(description='Build EtsyTrackr executable')
     parser.add_argument('--mode', choices=['onefile', 'dir', 'appimage', 'dmg'], default='onefile',
-                      help='Build mode: onefile=single executable, dir=directory with dependencies, '
-                           'appimage=Linux AppImage, dmg=macOS DMG')
+                       help='Build mode: onefile for single executable, dir for directory mode, appimage for Linux AppImage, dmg for macOS DMG')
     args = parser.parse_args()
     
     # Clean dist directory once at the start
     clean_dist()
     
     if args.mode == 'appimage':
+        if not sys.platform.startswith('linux'):
+            print("AppImage can only be built on Linux")
+            sys.exit(1)
         print("Building directory version for AppImage...")
         dir_info = build_executable(onefile=False)
-        print("Creating AppImage...")
         build_appimage(dir_info['dist_dir'])
-    elif args.mode == 'dmg' and sys.platform == 'darwin':
-        print("Building directory version for DMG...")
+    elif args.mode == 'dmg':
+        if not sys.platform.startswith('darwin'):
+            print("DMG can only be built on macOS")
+            sys.exit(1)
+        print("Building DMG...")
         dir_info = build_executable(onefile=False)
-        # DMG is created automatically in build_executable for macOS
-    elif args.mode == 'dir':
-        print("Building directory version...")
-        build_executable(onefile=False)
-    elif args.mode == 'onefile':
-        print("Building single-file version...")
-        build_executable(onefile=True)
+        build_dmg(os.path.join(dir_info['dist_dir'], dir_info['exe_name'] + '.app'))
     else:
-        print(f"Error: Mode {args.mode} not supported on this platform")
-        sys.exit(1)
+        # Build both versions
+        print("Building single-file version...")
+        onefile_info = build_executable(onefile=True)
+        print("\nBuilding directory version...")
+        dir_info = build_executable(onefile=False)
