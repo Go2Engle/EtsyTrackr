@@ -211,9 +211,10 @@ def build_executable(onefile=True):
     modules_path = os.path.join(current_dir, 'modules')
     assets_path = os.path.join(current_dir, 'assets')
     
-    # Get icon path and version from VersionChecker
+    # Get icon path and version
+    from modules.version import VersionChecker
+    version = VersionChecker.CURRENT_VERSION.lstrip('v')
     icon_path = os.path.join(assets_path, 'icon.png')
-    version = "0.7.1"  # This should match your current version
     
     if not os.path.exists(icon_path):
         print(f"Warning: Icon not found at {icon_path}")
@@ -277,10 +278,6 @@ def build_executable(onefile=True):
         command.extend([
             '--osx-bundle-identifier=com.go2engle.etsytrackr'
         ])
-        # Add Info.plist if it exists
-        plist_path = os.path.join(current_dir, 'Info.plist')
-        if os.path.exists(plist_path):
-            command.append(f'--plist={plist_path}')
     
     # Add icon if available
     if icon_path:
@@ -300,14 +297,21 @@ def build_executable(onefile=True):
         if sys.platform == 'darwin' and not onefile:
             app_path = os.path.join(output_dir, f'{base_name}.app')
             if os.path.exists(app_path):
-                # Copy Info.plist to the app bundle if not already there
+                # Copy Info.plist to the app bundle
                 contents_path = os.path.join(app_path, 'Contents')
                 plist_path = os.path.join(current_dir, 'Info.plist')
                 if os.path.exists(plist_path):
                     dest_plist = os.path.join(contents_path, 'Info.plist')
-                    if not os.path.exists(dest_plist):
-                        shutil.copy2(plist_path, dest_plist)
-                        print(f"Copied Info.plist to app bundle at: {dest_plist}")
+                    shutil.copy2(plist_path, dest_plist)
+                    print(f"Copied Info.plist to app bundle at: {dest_plist}")
+                
+                # Copy icon to Resources
+                if icon_path and icon_path.endswith('.icns'):
+                    resources_path = os.path.join(contents_path, 'Resources')
+                    os.makedirs(resources_path, exist_ok=True)
+                    icon_dest = os.path.join(resources_path, 'icon.icns')
+                    shutil.copy2(icon_path, icon_dest)
+                    print(f"Copied icon to app bundle at: {icon_dest}")
         
         # Return the paths for any platform
         result = {

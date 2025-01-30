@@ -1,0 +1,51 @@
+name: Test macOS Build
+
+on:
+  push:
+    branches:
+      - mac-builds
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
+
+jobs:
+  test-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11.8
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          brew install create-dmg
+
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /Library/Developer/CommandLineTools
+          sudo rm -rf /usr/local/lib/node_modules
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/share/swift
+          brew cleanup
+
+      - name: Build DMG with debug
+        run: |
+          python -m pip install --upgrade pyinstaller
+          python build.py --mode dmg --debug
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            build/*.log
+            build/*.txt
+            *.log
+            *.txt
