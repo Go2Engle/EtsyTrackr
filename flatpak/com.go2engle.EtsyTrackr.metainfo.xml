@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.go2engle.EtsyTrackr</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>EtsyTrackr</name>
+  <summary>Track and manage your Etsy shop sales and inventory</summary>
+  <description>
+    <p>
+      EtsyTrackr is a desktop application that helps Etsy shop owners track and manage their sales and inventory.
+      It provides an easy-to-use interface for monitoring shop performance and managing products.
+    </p>
+  </description>
+  <launchable type="desktop-id">com.go2engle.EtsyTrackr.desktop</launchable>
+  <url type="homepage">https://github.com/go2engle/EtsyTrackr</url>
+  <developer_name>go2engle</developer_name>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release version="0.8.0" date="2025-01-31">
+      <description>
+        <p>Initial release of EtsyTrackr</p>
+      </description>
+    </release>
+  </releases>
+</component>

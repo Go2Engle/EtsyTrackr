@@ -54,7 +54,12 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y fuse libfuse2 python3-tk python3-dev
+          sudo apt-get install -y fuse libfuse2 python3-tk python3-dev flatpak flatpak-builder imagemagick
+
+      - name: Setup Flatpak environment
+        run: |
+          sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          sudo flatpak install -y flathub org.freedesktop.Platform//23.08 org.freedesktop.Sdk//23.08
 
       - name: Install Python dependencies
         run: |
@@ -64,10 +69,21 @@ jobs:
       - name: Build AppImage
         run: python build.py --mode appimage
 
+      - name: Build OneFile
+        run: python build.py --mode onefile
+
+      - name: Build Flatpak
+        run: python build_flatpak.py
+
       - name: Upload AppImage Release Asset
         uses: softprops/action-gh-release@v2
         with:
           files: dist/appimage/EtsyTrackr-x86_64.AppImage
+
+      - name: Upload Flatpak Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/flatpak/EtsyTrackr.flatpak
 
   build-macos:
     runs-on: macos-latest

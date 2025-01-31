@@ -111,7 +111,7 @@ def create_mac_plist(plist_path, bundle_name, version, icon_name):
     <key>CFBundleIconFile</key>
     <string>{icon_name}</string>
     <key>CFBundleIdentifier</key>
-    <string>com.go2engle.etsytrackr</string>
+    <string>com.go2engle.EtsyTrackr</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
@@ -147,7 +147,7 @@ Type=Application
 Categories=Office;Finance;
 Keywords=etsy;shop;tracking;finance;inventory;"""
     
-    desktop_path = os.path.join(output_dir, 'etsytrackr.desktop')
+    desktop_path = os.path.join(output_dir, 'EtsyTrackr.desktop')
     with open(desktop_path, 'w') as f:
         f.write(desktop_content)
     return desktop_path
@@ -290,8 +290,8 @@ def build_executable(onefile=True):
             except Exception as e:
                 print(f"Warning: Could not process icon for macOS: {e}")
     else:  # Linux
-        base_name = 'etsytrackr'
-        exe_name = base_name
+        base_name = 'EtsyTrackr'
+        exe_name = 'etsytrackr'
         sep = ':'
     
     # Set output directory based on mode
@@ -312,7 +312,7 @@ def build_executable(onefile=True):
     # Add platform-specific options
     if sys.platform.startswith('darwin') and not onefile:
         command.extend([
-            '--osx-bundle-identifier=com.go2engle.etsytrackr'
+            '--osx-bundle-identifier=com.go2engle.EtsyTrackr'
         ])
     
     # Add icon if available
@@ -373,10 +373,10 @@ def build_appimage(pyinstaller_dir):
     os.makedirs(appdir)
     
     # Copy PyInstaller build to AppDir
-    shutil.copytree(os.path.join(pyinstaller_dir, 'etsytrackr'), os.path.join(appdir, 'usr', 'bin'))
+    shutil.copytree(os.path.join(pyinstaller_dir, 'EtsyTrackr'), os.path.join(appdir, 'usr', 'bin'))
     
     # Create symlink for AppRun
-    os.symlink('usr/bin/etsytrackr', os.path.join(appdir, 'AppRun'))
+    os.symlink('usr/bin/EtsyTrackr', os.path.join(appdir, 'AppRun'))
     
     # Copy and set up icons in standard Linux directory structure
     icon_sizes = ['16x16', '32x32', '48x48', '64x64', '128x128', '256x256', '512x512']
@@ -393,15 +393,15 @@ def build_appimage(pyinstaller_dir):
             img = Image.open(icon_source)
             size_px = int(size.split('x')[0])
             resized_img = img.resize((size_px, size_px), Image.Resampling.LANCZOS)
-            resized_img.save(os.path.join(icon_dir, 'etsytrackr.png'))
+            resized_img.save(os.path.join(icon_dir, 'EtsyTrackr.png'))
         except Exception as e:
             print(f"Warning: Could not create {size} icon: {e}")
             # Fallback to copying original icon
-            shutil.copy2(icon_source, os.path.join(icon_dir, 'etsytrackr.png'))
+            shutil.copy2(icon_source, os.path.join(icon_dir, 'EtsyTrackr.png'))
     
     # Copy original icon to root of AppDir (required by AppImage spec)
-    shutil.copy2(icon_source, os.path.join(appdir, 'etsytrackr.png'))
-    os.symlink('etsytrackr.png', os.path.join(appdir, '.DirIcon'))
+    shutil.copy2(icon_source, os.path.join(appdir, 'EtsyTrackr.png'))
+    os.symlink('EtsyTrackr.png', os.path.join(appdir, '.DirIcon'))
     
     # Create and copy desktop file
     desktop_dir = os.path.join(appdir, 'usr', 'share', 'applications')
@@ -420,7 +420,7 @@ def build_appimage(pyinstaller_dir):
     
     metainfo_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>etsytrackr.desktop</id>
+  <id>EtsyTrackr.desktop</id>
   <metadata_license>MIT</metadata_license>
   <project_license>MIT</project_license>
   <name>EtsyTrackr</name>
@@ -432,7 +432,7 @@ def build_appimage(pyinstaller_dir):
     </p>
   </description>
   
-  <launchable type="desktop-id">etsytrackr.desktop</launchable>
+  <launchable type="desktop-id">EtsyTrackr.desktop</launchable>
   
   <screenshots>
     <screenshot type="default">
@@ -444,7 +444,7 @@ def build_appimage(pyinstaller_dir):
   <url type="homepage">https://github.com/go2engle/EtsyTrackr</url>
   
   <provides>
-    <binary>etsytrackr</binary>
+    <binary>EtsyTrackr</binary>
   </provides>
   
   <developer_name>go2engle</developer_name>
@@ -460,7 +460,7 @@ def build_appimage(pyinstaller_dir):
   <content_rating type="oars-1.1" />
 </component>"""
     
-    with open(os.path.join(metainfo_dir, 'etsytrackr.appdata.xml'), 'w') as f:
+    with open(os.path.join(metainfo_dir, 'EtsyTrackr.appdata.xml'), 'w') as f:
         f.write(metainfo_content)
     
     # Download AppImage tool if not present

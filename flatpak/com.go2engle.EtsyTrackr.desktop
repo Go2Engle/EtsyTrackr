@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=EtsyTrackr
+Comment=Track and manage your Etsy shop sales and inventory
+Exec=EtsyTrackr
+Icon=com.go2engle.EtsyTrackr
+Terminal=false
+Type=Application
+Categories=Office;Finance;
+Keywords=etsy;shop;tracking;inventory;
