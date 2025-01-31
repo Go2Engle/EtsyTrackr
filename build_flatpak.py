@@ -34,7 +34,7 @@ def build_flatpak():
 runtime: org.freedesktop.Platform
 runtime-version: '23.08'
 sdk: org.freedesktop.Sdk
-command: EtsyTrackr
+command: etsytrackr
 finish-args:
   - --share=network
   - --share=ipc
@@ -45,13 +45,13 @@ modules:
   - name: etsytrackr
     buildsystem: simple
     build-commands:
-      - install -D EtsyTrackr /app/bin/EtsyTrackr
+      - install -D etsytrackr /app/bin/etsytrackr
       - install -D com.go2engle.EtsyTrackr.desktop /app/share/applications/com.go2engle.EtsyTrackr.desktop
       - install -D com.go2engle.EtsyTrackr.metainfo.xml /app/share/metainfo/com.go2engle.EtsyTrackr.metainfo.xml
       - install -D icon.png /app/share/icons/hicolor/256x256/apps/com.go2engle.EtsyTrackr.png
     sources:
       - type: file
-        path: ../dist/onefile/EtsyTrackr
+        path: ../dist/onefile/etsytrackr
       - type: file
         path: com.go2engle.EtsyTrackr.desktop
       - type: file
@@ -62,7 +62,7 @@ modules:
     desktop_content = '''[Desktop Entry]
 Name=EtsyTrackr
 Comment=Track and manage your Etsy shop sales and inventory
-Exec=EtsyTrackr
+Exec=etsytrackr
 Icon=com.go2engle.EtsyTrackr
 Terminal=false
 Type=Application
@@ -117,7 +117,7 @@ Keywords=etsy;shop;tracking;inventory;'''
         'flatpak',
         'build-bundle',
         'repo',
-        '../dist/flatpak/EtsyTrackr.flatpak',
+        '../dist/flatpak/etsytrackr.flatpak',
         'com.go2engle.EtsyTrackr'
     ], cwd=flatpak_dir, check=True)
     
