@@ -34,7 +34,7 @@ def build_flatpak():
 runtime: org.freedesktop.Platform
 runtime-version: '23.08'
 sdk: org.freedesktop.Sdk
-command: EtsyTrackr
+command: etsytrackr
 finish-args:
   - --share=network
   - --share=ipc
@@ -46,6 +46,7 @@ modules:
     buildsystem: simple
     build-commands:
       - install -D EtsyTrackr /app/bin/etsytrackr
+      - chmod +x /app/bin/etsytrackr
       - install -D com.go2engle.EtsyTrackr.desktop /app/share/applications/com.go2engle.EtsyTrackr.desktop
       - install -D com.go2engle.EtsyTrackr.metainfo.xml /app/share/metainfo/com.go2engle.EtsyTrackr.metainfo.xml
       - install -D icon.png /app/share/icons/hicolor/256x256/apps/com.go2engle.EtsyTrackr.png
