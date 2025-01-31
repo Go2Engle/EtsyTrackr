@@ -51,7 +51,7 @@ modules:
       - install -D icon.png /app/share/icons/hicolor/256x256/apps/com.go2engle.EtsyTrackr.png
     sources:
       - type: file
-        path: ../dist/onefile/etsytrackr
+        path: ../dist/onefile/EtsyTrackr
       - type: file
         path: com.go2engle.EtsyTrackr.desktop
       - type: file
