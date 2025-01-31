@@ -8,6 +8,11 @@ on:
       - 'flatpak/**'
       - 'build_flatpak.py'
       - '.github/workflows/test_flatpak.yml'
+  workflow_dispatch:
+    inputs:
+      trigger:
+        description: 'Manual trigger for the workflow'
+        required: false
 
 jobs:
   build-flatpak:
