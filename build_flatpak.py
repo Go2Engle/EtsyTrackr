@@ -34,7 +34,7 @@ def build_flatpak():
 runtime: org.freedesktop.Platform
 runtime-version: '23.08'
 sdk: org.freedesktop.Sdk
-command: etsytrackr
+command: EtsyTrackr
 finish-args:
   - --share=network
   - --share=ipc
@@ -42,10 +42,10 @@ finish-args:
   - --socket=wayland
   - --filesystem=home
 modules:
-  - name: etsytrackr
+  - name: EtsyTrackr
     buildsystem: simple
     build-commands:
-      - install -D etsytrackr /app/bin/etsytrackr
+      - install -D EtsyTrackr /app/bin/etsytrackr
       - install -D com.go2engle.EtsyTrackr.desktop /app/share/applications/com.go2engle.EtsyTrackr.desktop
       - install -D com.go2engle.EtsyTrackr.metainfo.xml /app/share/metainfo/com.go2engle.EtsyTrackr.metainfo.xml
       - install -D icon.png /app/share/icons/hicolor/256x256/apps/com.go2engle.EtsyTrackr.png
@@ -117,7 +117,7 @@ Keywords=etsy;shop;tracking;inventory;'''
         'flatpak',
         'build-bundle',
         'repo',
-        '../dist/flatpak/etsytrackr.flatpak',
+        '../dist/flatpak/EtsyTrackr.flatpak',
         'com.go2engle.EtsyTrackr'
     ], cwd=flatpak_dir, check=True)
     
