@@ -3,11 +3,7 @@ name: Test Flatpak Build
 on:
   push:
     branches:
-      - flatpak
-    paths:
-      - 'flatpak/**'
-      - 'build_flatpak.py'
-      - '.github/workflows/test_flatpak.yml'
+      - flatpack
   workflow_dispatch:
     inputs:
       trigger:
