@@ -69,16 +69,16 @@ jobs:
       - name: Build AppImage
         run: python build.py --mode appimage
 
+      - name: Upload AppImage Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/appimage/EtsyTrackr-x86_64.AppImage
+
       - name: Build OneFile
         run: python build.py --mode onefile
 
       - name: Build Flatpak
         run: python build_flatpak.py
-
-      - name: Upload AppImage Release Asset
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/appimage/EtsyTrackr-x86_64.AppImage
 
       - name: Upload Flatpak Release Asset
         uses: softprops/action-gh-release@v2
