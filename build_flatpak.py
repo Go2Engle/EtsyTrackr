@@ -88,7 +88,7 @@ Keywords=etsy;shop;tracking;inventory;'''
   <developer_name>go2engle</developer_name>
   <content_rating type="oars-1.1" />
   <releases>
-    <release version="0.8.0" date="2025-01-31">
+    <release version="0.8.1" date="2025-02-01">
       <description>
         <p>Initial release of EtsyTrackr</p>
       </description>
