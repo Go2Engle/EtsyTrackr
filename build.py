@@ -140,7 +140,7 @@ def create_desktop_file(output_dir):
     desktop_content = """[Desktop Entry]
 Name=EtsyTrackr
 Comment=Track and manage your Etsy shop finances and inventory
-Exec=etsytrackr
+Exec=EtsyTrackr
 Icon=etsytrackr
 Terminal=false
 Type=Application
@@ -382,6 +382,9 @@ def build_appimage(pyinstaller_dir):
     icon_sizes = ['16x16', '32x32', '48x48', '64x64', '128x128', '256x256', '512x512']
     icon_source = 'assets/icon.png'
     
+    # Copy the icon to AppDir root with lowercase name
+    shutil.copy2(icon_source, os.path.join(appdir, 'etsytrackr.png'))
+    
     # Create base icon directories
     for size in icon_sizes:
         icon_dir = os.path.join(appdir, 'usr', 'share', 'icons', 'hicolor', size, 'apps')
@@ -393,15 +396,11 @@ def build_appimage(pyinstaller_dir):
             img = Image.open(icon_source)
             size_px = int(size.split('x')[0])
             resized_img = img.resize((size_px, size_px), Image.Resampling.LANCZOS)
-            resized_img.save(os.path.join(icon_dir, 'EtsyTrackr.png'))
+            resized_img.save(os.path.join(icon_dir, 'etsytrackr.png'))
         except Exception as e:
             print(f"Warning: Could not create {size} icon: {e}")
             # Fallback to copying original icon
-            shutil.copy2(icon_source, os.path.join(icon_dir, 'EtsyTrackr.png'))
-    
-    # Copy original icon to root of AppDir (required by AppImage spec)
-    shutil.copy2(icon_source, os.path.join(appdir, 'EtsyTrackr.png'))
-    os.symlink('EtsyTrackr.png', os.path.join(appdir, '.DirIcon'))
+            shutil.copy2(icon_source, os.path.join(icon_dir, 'etsytrackr.png'))
     
     # Create and copy desktop file
     desktop_dir = os.path.join(appdir, 'usr', 'share', 'applications')
