@@ -536,7 +536,7 @@ class DashboardWidget(QWidget):
             total_offsite_ads = df['Offsite Ads Fee'].sum()
             total_etsy_ads = df['Etsy Ads Fee'].sum()
             net_income = total_sales + total_shipping + total_tax + total_fees + total_listing_fees + total_offsite_ads + total_etsy_ads
-            profit_margin = (net_income / total_sales * 100) if total_sales > 0 else 0
+            
             
             start_date, end_date = self.get_date_filter()
             
@@ -553,7 +553,8 @@ class DashboardWidget(QWidget):
                         total_expenses += float(expense['amount'])
             
             total_profit = net_income - total_expenses
-            
+            profit_margin = (total_profit / total_sales * 100) if total_sales > 0 else 0
+
             self.total_sales_card.update_value(f"${total_sales:,.2f}")
             self.total_orders_card.update_value(str(total_orders))
             self.avg_order_value_card.update_value(f"${avg_order_value:,.2f}")
